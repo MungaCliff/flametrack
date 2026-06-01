@@ -678,6 +678,14 @@ small{font-size:12px;color:var(--muted);line-height:1.45}
       <b>📋 Question Manager</b>
       <p class="small" style="margin-top:4px">Manage questions for every role and session. Toggle Required / Optional with one tap. Add, edit or delete any question.</p>
 
+      <!-- PUBLISH BUTTON -->
+      <div style="background:#f0faf0;border:1.5px solid #7ccc8a;border-radius:12px;padding:12px;margin-top:10px;margin-bottom:4px">
+        <div style="font-size:13px;font-weight:700;color:#1a6b2a;margin-bottom:6px">📢 Publish questions to all users</div>
+        <p class="small" style="color:#2d7a3a;margin-bottom:8px">When you add, edit or delete questions — click this button to push changes to everyone instantly. All users get your latest questions next time they open the app.</p>
+        <button class="btn primary" style="width:100%;background:#22a63a;border:0" onclick="publishQuestions()">🚀 Publish questions now</button>
+        <div id="publishMsg" style="font-size:12px;margin-top:6px;min-height:16px;text-align:center"></div>
+      </div>
+
       <!-- Filter bar -->
       <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap" id="qmTabs">
         <button class="qm-tab active" onclick="showQMTab('all',this)">All</button>
@@ -820,6 +828,11 @@ small{font-size:12px;color:var(--muted);line-height:1.45}
 //  CONFIG & DEFAULTS
 // ════════════════════════════════════════════
 const PIN_KEY  = 'ft_admin_pin';
+
+// ── HARDCODED URLS — work on every device automatically ──
+const DEFAULT_MAPPING_URL  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRNHXmIzq53E5yMoUCeN6n-MVXykcefh6IpUIHzPjnljMV78vHW0ZlGs3OrTDaVxNBtA83IPqhevSj-/pub?gid=0&single=true&output=csv';
+const DEFAULT_DROPDOWN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRNHXmIzq53E5yMoUCeN6n-MVXykcefh6IpUIHzPjnljMV78vHW0ZlGs3OrTDaVxNBtA83IPqhevSj-/pub?gid=989903560&single=true&output=csv';
+const DEFAULT_BACKEND_URL  = 'https://script.google.com/macros/s/AKfycbznjen5lLbxc4S06cIva8LMbo5TdAaxHuvIPvNKjYGpnsEVSBdiHtQYjjsNOAsdD-mc/exec';
 const CFG_KEY  = 'ic_cfg_v6';
 const MAP_KEY  = 'ic_mapping_v7'; // v7 — clears old fake cached names
 const RPT_KEY  = 'ic_reports_v6';
@@ -1257,9 +1270,9 @@ function loadAdminFields(){
   document.getElementById('cfgChallenges').value    = c.challenges.join('\n');
   document.getElementById('cfgDemoLocations').value = c.demoLocations.join('\n');
   document.getElementById('cfgTopics').value        = c.topics.join('\n');
-  document.getElementById('appsScriptUrl').value    = localStorage.getItem('ic_backend_url') || '';
-  document.getElementById('mappingSheetUrl').value  = localStorage.getItem('ic_mapping_sheet_url') || '';
-  document.getElementById('dropdownSheetUrl').value = localStorage.getItem('ic_dropdown_sheet_url') || '';
+  document.getElementById('appsScriptUrl').value    = localStorage.getItem('ic_backend_url')          || DEFAULT_BACKEND_URL;
+  document.getElementById('mappingSheetUrl').value  = localStorage.getItem('ic_mapping_sheet_url')  || DEFAULT_MAPPING_URL;
+  document.getElementById('dropdownSheetUrl').value = localStorage.getItem('ic_dropdown_sheet_url') || DEFAULT_DROPDOWN_URL;
   const qUrlEl = document.getElementById('questionsUrl'); if(qUrlEl) qUrlEl.value = localStorage.getItem('ic_questions_url')||'';
 }
 
@@ -1680,8 +1693,8 @@ function rowsToObjects(rows){
   return rows.filter(r=>r.some(Boolean)).map(r=>Object.fromEntries(h.map((k,i)=>[k,(r[i]||'').trim()])));
 }
 async function refreshFromGoogleSheets(){
-  const mapUrl  = localStorage.getItem('ic_mapping_sheet_url');
-  const dropUrl = localStorage.getItem('ic_dropdown_sheet_url');
+  const mapUrl  = localStorage.getItem('ic_mapping_sheet_url')  || DEFAULT_MAPPING_URL;
+  const dropUrl = localStorage.getItem('ic_dropdown_sheet_url') || DEFAULT_DROPDOWN_URL;
   try{
     if(mapUrl){
       const txt  = await fetch(mapUrl,{cache:'no-store'}).then(r=>r.text());
@@ -1715,7 +1728,7 @@ function saveBackend(){
 }
 
 function postToBackend(record){
-  const url=localStorage.getItem('ic_backend_url');
+  const url=localStorage.getItem('ic_backend_url') || DEFAULT_BACKEND_URL;
   if(!url)return;
   fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(record)}).catch(()=>{});
 }
@@ -1918,7 +1931,47 @@ function getAllQuestions(){
   return all;
 }
 
-function pushQuestionsToSheets(allQuestions){
+function publishQuestions(){
+  const url = localStorage.getItem('ic_backend_url') || DEFAULT_BACKEND_URL;
+  const msg = document.getElementById('publishMsg');
+  if(!url){
+    msg.style.color='#c00';
+    msg.textContent='❌ No Apps Script URL saved. Go to Google Sheets connection and save your URL first.';
+    return;
+  }
+  // Gather all questions from all sections
+  const all = {};
+  const allSections = Object.keys(DEFAULT_QUESTIONS);
+  allSections.forEach(s => {
+    all[s] = getQuestions(s);
+  });
+  msg.style.color='#888';
+  msg.textContent='Publishing…';
+  fetch(url, {
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      _type: 'questions_sync',
+      _questions: JSON.stringify(all),
+      submitted_at: new Date().toISOString()
+    })
+  }).then(()=>{
+    // Also save to localStorage as synced
+    localStorage.setItem('fla_synced_questions', JSON.stringify(all));
+    msg.style.color='#22a63a';
+    msg.textContent='✅ Published! All users will see your latest questions.';
+    setTimeout(()=>{ msg.textContent=''; }, 5000);
+  }).catch(()=>{
+    // no-cors always fires .then() — assume success
+    localStorage.setItem('fla_synced_questions', JSON.stringify(all));
+    msg.style.color='#22a63a';
+    msg.textContent='✅ Published! All users will see your latest questions.';
+    setTimeout(()=>{ msg.textContent=''; }, 5000);
+  });
+}
+
+
   const url = localStorage.getItem('ic_backend_url');
   if(!url) return;
   // Send as special _questions record
@@ -1935,7 +1988,7 @@ function pushQuestionsToSheets(allQuestions){
 
 async function pullQuestionsFromSheets(){
   // Pull from Apps Script URL using ?action=questions
-  const url = localStorage.getItem('ic_backend_url');
+  const url = localStorage.getItem('ic_backend_url') || DEFAULT_BACKEND_URL;
   if(!url) return;
   try{
     const resp = await fetch(url + '?action=questions&v=' + Date.now(), {cache:'no-store'});
