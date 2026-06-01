@@ -1029,7 +1029,7 @@ function updateSessionPills(){
 // ════════════════════════════════════════════
 //  INIT
 // ════════════════════════════════════════════
-function init(){
+async function init(){
   const h = new Date().getHours();
   const sessNames = {Morning:'Morning session', Midday:'Midday session', EOD:'EOD session', Closed:'Closed'};
   document.getElementById('sessionText').textContent =
@@ -1038,8 +1038,9 @@ function init(){
     session === 'EOD' ? 'Close of Day' : session;
   updateSessionPills();
   loadNames(); loadDropdowns(); loadAdminFields();
-  refreshFromGoogleSheets(); captureGPS(); refreshAdmin(); renderQuestionGuide(); initQM(); loadSessSettings();
-  pullQuestionsFromSheets(); // sync latest questions from admin
+  await refreshFromGoogleSheets(); // wait for names to load from Sheets
+  captureGPS(); refreshAdmin(); renderQuestionGuide(); initQM(); loadSessSettings();
+  pullQuestionsFromSheets().catch(()=>{}); // sync questions silently
   // Sessions always open — no closed state
   document.addEventListener('click', e => {
     if(!e.target.closest('.ms'))
@@ -1189,19 +1190,19 @@ function loadNames(){
 }
 
 function loadDropdowns(){
-  const c = getConfig(), m = getMapping();
+  const cfg2 = getConfig(), m = getMapping();
   const currentName = firstMS('name');
-  renderMultiSelect('keyChallengeBox',   'keyChallenge',    c.challenges,    false, 'Select challenge');
-  renderMultiSelect('agentDoneSoFarBox', 'agentDoneSoFar',  c.doneSoFar,     true,  'Select all that apply');
-  renderMultiSelect('agentBlockerBox',   'agentBlocker',    c.blockers,      false, 'Select blocker');
+  renderMultiSelect('keyChallengeBox',   'keyChallenge',    cfg2.challenges,    false, 'Select challenge');
+  renderMultiSelect('agentDoneSoFarBox', 'agentDoneSoFar',  cfg2.doneSoFar,     true,  'Select all that apply');
+  renderMultiSelect('agentBlockerBox',   'agentBlocker',    cfg2.blockers,      false, 'Select blocker');
   renderMultiSelect('agentCoachHeldBox', 'agentCoachHeld',  ['No','Yes'],    false, 'Select yes/no');
   renderMultiSelect('tlCoachHeldBox',    'tlCoachHeld',     ['No','Yes'],    false, 'Select yes/no');
   renderMultiSelect('rsmCoachHeldBox',   'rsmCoachHeld',    ['No','Yes'],    false, 'Select yes/no');
-  renderMultiSelect('agentTopicsBox',    'agentTopics',     c.topics,        true,  'Select topic(s)');
-  renderMultiSelect('tlTopicsBox',       'tlTopics',        c.topics,        true,  'Select topic(s)');
-  renderMultiSelect('rsmTopicsBox',      'rsmTopics',       c.topics,        true,  'Select topic(s)');
-  renderMultiSelect('tlDemoLocationsBox','tlDemoLocations', c.demoLocations, true,  'Select location(s)');
-  renderMultiSelect('rsmDemoLocationsBox','rsmDemoLocations',c.demoLocations,true,  'Select location(s)');
+  renderMultiSelect('agentTopicsBox',    'agentTopics',     cfg2.topics,        true,  'Select topic(s)');
+  renderMultiSelect('tlTopicsBox',       'tlTopics',        cfg2.topics,        true,  'Select topic(s)');
+  renderMultiSelect('rsmTopicsBox',      'rsmTopics',       cfg2.topics,        true,  'Select topic(s)');
+  renderMultiSelect('tlDemoLocationsBox','tlDemoLocations', cfg2.demoLocations, true,  'Select location(s)');
+  renderMultiSelect('rsmDemoLocationsBox','rsmDemoLocations',cfg2.demoLocations,true,  'Select location(s)');
   renderMultiSelect('clusterSelectBox',  'clusterSelect',   [...new Set(m.map(x=>x.Cluster).filter(Boolean))], false, 'Select cluster');
   renderMultiSelect('tlAgentsBox',  'tlAgents',  [...new Set(m.filter(x=>!currentName||x.TLName===currentName).map(x=>x.AgentName).filter(Boolean))], true, 'Select agent(s)');
   renderMultiSelect('rsmTLsBox',    'rsmTLs',    [...new Set(m.filter(x=>!currentName||x.RSMName===currentName).map(x=>x.TLName).filter(Boolean))],  true, 'Select TL(s)');
@@ -1233,8 +1234,8 @@ function loadDropdowns(){
   renderMultiSelect('clerkTrainedBox','clerkTrained',
     ['Usage','Repayment','Warranty','Contract terms','Customer eCoa App'], true, 'Select all that apply');
   renderMultiSelect('clerkCoachHeldBox','clerkCoachHeld',['No','Yes'], false, 'Select yes/no');
-  renderMultiSelect('clerkTopicsBox','clerkTopics', c.topics, true, 'Select topic(s)');
-  renderMultiSelect('clerkChallengeBox','clerkChallenge', c.challenges, false, 'Select challenge');
+  renderMultiSelect('clerkTopicsBox','clerkTopics', cfg2.topics, true, 'Select topic(s)');
+  renderMultiSelect('clerkChallengeBox','clerkChallenge', cfg2.challenges, false, 'Select challenge');
   // Trainer midday dropdowns
   renderMultiSelect('trainerDoneSoFarBox','trainerDoneSoFar',
     ['Completed intro','Covered product knowledge','Did demo practice','Assessment started','None yet'], true, 'Select all that apply');
@@ -1243,16 +1244,16 @@ function loadDropdowns(){
   renderMultiSelect('trainerAgentsMorningBox','trainerAgentsMorning',
     [...new Set(m.map(x=>x.AgentName).filter(Boolean))], true, 'Select agent(s)');
   renderMultiSelect('trainerTopicsMorningBox','trainerTopicsMorning',
-    c.trainerTopics||defaultConfig.trainerTopics, true, 'Select topic(s)');
+    cfg2.trainerTopics||defaultConfig.trainerTopics, true, 'Select topic(s)');
   // Trainer dropdowns
   const trainerAgentList = [...new Set(m.map(x=>x.AgentName).filter(Boolean))];
   renderMultiSelect('trainerSessionTypeBox','trainerSessionType',
     ['Classroom training','Field ride-along','One-on-one coaching','Group workshop','Assessment/test','Refresher training'], false, 'Select session type');
   renderMultiSelect('trainerAgentsBox','trainerAgents', trainerAgentList, true, 'Select agent(s)');
-  renderMultiSelect('trainerTopicsBox','trainerTopics', c.trainerTopics||defaultConfig.trainerTopics, true, 'Select topic(s)');
+  renderMultiSelect('trainerTopicsBox','trainerTopics', cfg2.trainerTopics||defaultConfig.trainerTopics, true, 'Select topic(s)');
   renderMultiSelect('trainerConversionBox','trainerConversion',['No','Yes'], false, 'Select yes/no');
   renderMultiSelect('trainerRepayBox','trainerRepay',['No','Yes'], false, 'Select yes/no');
-  renderMultiSelect('trainerPolicyBox','trainerPolicy', c.trainerPolicyTopics||defaultConfig.trainerPolicyTopics, true, 'Select policy topic(s)');
+  renderMultiSelect('trainerPolicyBox','trainerPolicy', cfg2.trainerPolicyTopics||defaultConfig.trainerPolicyTopics, true, 'Select policy topic(s)');
 }
 
 function loadAdminFields(){
@@ -1299,18 +1300,27 @@ function afterNameSelected(){
   if(role==='Agent'   && session==='Morning') document.getElementById('agentMorning').classList.remove('hidden');
   if(role==='Agent'   && session==='Midday')  document.getElementById('agentMidday').classList.remove('hidden');
   if(role==='Agent'   && session==='EOD')     document.getElementById('agentEOD').classList.remove('hidden');
-  if(role==='TL'      && session==='Morning') document.getElementById('tlMorning').classList.remove('hidden');
-  if(role==='TL'      && session==='Midday')  document.getElementById('tlMidday').classList.remove('hidden');
-  if(role==='TL'      && session==='EOD')     document.getElementById('tlEOD').classList.remove('hidden');
-  if(role==='RSM'     && session==='Morning') document.getElementById('rsmMorning').classList.remove('hidden');
-  if(role==='RSM'     && session==='Midday')  document.getElementById('rsmMidday').classList.remove('hidden');
-  if(role==='RSM'     && session==='EOD')     document.getElementById('rsmEOD').classList.remove('hidden');
-  if(role==='Trainer' && session==='Morning') document.getElementById('trainerMorning').classList.remove('hidden');
-  if(role==='Trainer' && session==='Midday')  document.getElementById('trainerMidday').classList.remove('hidden');
-  if(role==='Trainer' && session==='EOD')     document.getElementById('trainerEOD').classList.remove('hidden');
-  if(role==='Clerk'   && session==='Morning') document.getElementById('clerkMorning').classList.remove('hidden');
-  if(role==='Clerk'   && session==='Midday')  document.getElementById('clerkMidday').classList.remove('hidden');
-  if(role==='Clerk'   && session==='EOD')     document.getElementById('clerkEOD').classList.remove('hidden');
+  const showSec = (id) => { const el=document.getElementById(id); if(el) el.classList.remove('hidden'); };
+  if(role==='TL'){
+    if(session==='Morning') showSec('tlMorning');
+    else if(session==='Midday') showSec('tlMidday');
+    else showSec('tlEOD');
+  }
+  if(role==='RSM'){
+    if(session==='Morning') showSec('rsmMorning');
+    else if(session==='Midday') showSec('rsmMidday');
+    else showSec('rsmEOD');
+  }
+  if(role==='Trainer'){
+    if(session==='Morning') showSec('trainerMorning');
+    else if(session==='Midday') showSec('trainerMidday');
+    else showSec('trainerEOD');
+  }
+  if(role==='Clerk'){
+    if(session==='Morning') showSec('clerkMorning');
+    else if(session==='Midday') showSec('clerkMidday');
+    else showSec('clerkEOD');
+  }
 
   // Pre-fill country/region/cluster from mapping
   const m = getMapping().find(x=>x.AgentName===name||x.TLName===name||x.RSMName===name||x.TrainerName===name||x.ClerkName===name);
@@ -1589,7 +1599,7 @@ function submitReport(){
     r.middaySold       = document.getElementById('tlMiddaySold')?.value;
   }
   if(role==='TL' && session==='EOD'){
-    r.agents       = getMS('tlAgentsEod');
+    r.agents       = getMS('tlAgentsEod') || getMS('tlAgents');
     r.demoLocation = getMS('tlDemoLocations');
     r.coachingHeld = firstMS('tlCoachHeld');
     r.topics       = firstMS('tlCoachHeld')==='Yes' ? getMS('tlTopics') : '';
@@ -1928,10 +1938,11 @@ function pushQuestionsToSheets(allQuestions){
 }
 
 async function pullQuestionsFromSheets(){
-  const url = localStorage.getItem('ic_questions_url');
+  // Pull from Apps Script URL using ?action=questions
+  const url = localStorage.getItem('ic_backend_url');
   if(!url) return;
   try{
-    const resp = await fetch(url + '?v=' + Date.now(), {cache:'no-store'});
+    const resp = await fetch(url + '?action=questions&v=' + Date.now(), {cache:'no-store'});
     const txt = await resp.text();
     if(txt && txt.trim().startsWith('{')){
       const q = JSON.parse(txt);
