@@ -191,7 +191,7 @@ small{font-size:12px;color:var(--muted);line-height:1.45}
 <!-- ═══ HEADER ═══ -->
 <header>
   <h1>🔥 Field Live Activities</h1>
-  <p id="sessionText">Checking session...</p>
+  <p id="sessionText">Morning session is open</p>
   <button class="admin-link" id="adminAccess" onclick="openPinModal()">Admin access</button>
   <button class="admin-link hidden" id="logoutBtn" onclick="logoutAdmin()">Log out admin / back to user</button>
 </header>
@@ -2273,7 +2273,18 @@ function updateMSLabel(key, placeholder='Select...'){
 // ════════════════════════════════════════════
 //  START
 // ════════════════════════════════════════════
-init();
+// ── START APP ──
+try {
+  init();
+} catch(e) {
+  console.error('Init error:', e);
+  // Fallback — show basic form even if init fails
+  const st = document.getElementById('sessionText');
+  if(st) st.textContent = 'Session is open';
+  loadNames();
+  loadDropdowns();
+  refreshFromGoogleSheets().catch(()=>{});
+}
 </script>
 </body>
 </html>
