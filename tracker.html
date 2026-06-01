@@ -442,6 +442,78 @@ small{font-size:12px;color:var(--muted);line-height:1.45}
 
     <!-- Change PIN -->
     <div class="card">
+    <!-- ── SESSION TIME SETTINGS ── -->
+    <div class="card">
+      <b>🕐 Session Time Settings</b>
+      <p class="small" style="margin-top:4px">Set the open and close time for each session. Uses 24-hour format (e.g. 5 = 5:00 AM, 17 = 5:00 PM). Changes apply immediately.</p>
+      <div style="height:10px"></div>
+
+      <!-- Morning -->
+      <div style="background:var(--or-lt);border:1px solid var(--or-bd);border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-size:13px;font-weight:800;color:var(--or-dk);margin-bottom:8px">🌅 Morning session</div>
+        <div class="row">
+          <div class="f">
+            <label>Opens (hour)</label>
+            <input type="number" id="sessAmOpen"  min="0" max="23" inputmode="numeric" placeholder="e.g. 5">
+            <div class="note">5 = 5:00 AM</div>
+          </div>
+          <div class="f">
+            <label>Closes (hour)</label>
+            <input type="number" id="sessAmClose" min="0" max="23" inputmode="numeric" placeholder="e.g. 11">
+            <div class="note">11 = 10:59 AM</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Midday -->
+      <div style="background:#fff8f0;border:1px solid #f5d0a0;border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-size:13px;font-weight:800;color:#8a4000;margin-bottom:8px">☀️ Midday session</div>
+        <div class="row">
+          <div class="f">
+            <label>Opens (hour)</label>
+            <input type="number" id="sessMdOpen"  min="0" max="23" inputmode="numeric" placeholder="e.g. 11">
+            <div class="note">11 = 11:00 AM</div>
+          </div>
+          <div class="f">
+            <label>Closes (hour)</label>
+            <input type="number" id="sessMdClose" min="0" max="23" inputmode="numeric" placeholder="e.g. 16">
+            <div class="note">16 = 3:59 PM</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EOD -->
+      <div style="background:#fff0e8;border:1px solid #f0b890;border-radius:10px;padding:12px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:800;color:#7a2800;margin-bottom:8px">🌆 EOD session</div>
+        <div class="row">
+          <div class="f">
+            <label>Opens (hour)</label>
+            <input type="number" id="sessEodOpen"  min="0" max="23" inputmode="numeric" placeholder="e.g. 16">
+            <div class="note">16 = 4:00 PM</div>
+          </div>
+          <div class="f">
+            <label>Closes (hour)</label>
+            <input type="number" id="sessEodClose" min="0" max="23" inputmode="numeric" placeholder="e.g. 21">
+            <div class="note">21 = 9:00 PM</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Always open toggle -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--border);margin-bottom:10px">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--ink)">Always open (ignore times)</div>
+          <div class="note">Turn on to allow submissions 24/7 regardless of session times</div>
+        </div>
+        <div class="req-toggle" onclick="toggleAlwaysOpen()" style="margin-top:0;flex-shrink:0;margin-left:12px">
+          <div class="toggle-track" id="alwaysOpenTrack"><div class="toggle-thumb"></div></div>
+        </div>
+      </div>
+
+      <button class="a-btn" onclick="saveSessionSettings()">💾 Save session settings</button>
+      <div class="pw-msg" id="sessMsg"></div>
+    </div>
+
       <b>🔑 Change admin PIN</b>
       <div style="height:10px"></div>
       <div class="pw-row">
@@ -667,22 +739,103 @@ const saveReports= a  => localStorage.setItem(RPT_KEY, JSON.stringify(a));
 const getAdminPin= () => localStorage.getItem(PIN_KEY) || '2026';
 
 // ════════════════════════════════════════════
-//  SESSION DETECTION
-//  ✅ FIX: ALL roles can submit ALL sessions
+//  SESSION TIME SETTINGS
+//  Admin can set open/close hours per session
+//  Stored in localStorage — no code change needed
 // ════════════════════════════════════════════
+
+const SESS_KEY = 'fla_session_settings';
+
+const DEFAULT_SESS = {
+  am:  { open: 5,  close: 11 },  // 5:00 AM – 10:59 AM
+  md:  { open: 11, close: 16 },  // 11:00 AM – 3:59 PM
+  eod: { open: 16, close: 21 },  // 4:00 PM – 9:00 PM
+  alwaysOpen: true,               // default = always open
+};
+
+function getSessSettings(){
+  try { return JSON.parse(localStorage.getItem(SESS_KEY)) || DEFAULT_SESS; }
+  catch { return DEFAULT_SESS; }
+}
+
+function loadSessSettings(){
+  const s = getSessSettings();
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
+  set('sessAmOpen',   s.am.open);
+  set('sessAmClose',  s.am.close);
+  set('sessMdOpen',   s.md.open);
+  set('sessMdClose',  s.md.close);
+  set('sessEodOpen',  s.eod.open);
+  set('sessEodClose', s.eod.close);
+  const track = document.getElementById('alwaysOpenTrack');
+  if(track) track.className = 'toggle-track ' + (s.alwaysOpen ? 'on' : '');
+}
+
+function toggleAlwaysOpen(){
+  const s = getSessSettings();
+  s.alwaysOpen = !s.alwaysOpen;
+  localStorage.setItem(SESS_KEY, JSON.stringify(s));
+  const track = document.getElementById('alwaysOpenTrack');
+  if(track) track.className = 'toggle-track ' + (s.alwaysOpen ? 'on' : '');
+}
+
+function saveSessionSettings(){
+  const get = id => parseInt(document.getElementById(id)?.value) || 0;
+  const s = getSessSettings();
+  s.am.open    = get('sessAmOpen');
+  s.am.close   = get('sessAmClose');
+  s.md.open    = get('sessMdOpen');
+  s.md.close   = get('sessMdClose');
+  s.eod.open   = get('sessEodOpen');
+  s.eod.close  = get('sessEodClose');
+  // Validate
+  if(s.am.open >= s.am.close)  { showSessMsg('err','❌ Morning: open must be before close.'); return; }
+  if(s.md.open >= s.md.close)  { showSessMsg('err','❌ Midday: open must be before close.'); return; }
+  if(s.eod.open >= s.eod.close){ showSessMsg('err','❌ EOD: open must be before close.'); return; }
+  localStorage.setItem(SESS_KEY, JSON.stringify(s));
+  // Refresh current session
+  session = getSession();
+  updateSessionPills();
+  showSessMsg('ok','✅ Session times saved! Now: '+session+' session');
+  setTimeout(()=>{ document.getElementById('sessMsg').style.display='none'; }, 3000);
+}
+
+function showSessMsg(type, txt){
+  const el = document.getElementById('sessMsg');
+  if(!el) return;
+  el.textContent = txt;
+  el.className = 'pw-msg pw-'+type;
+  el.style.display = 'block';
+}
+
 function getSession(){
+  const s = getSessSettings();
+  // Always open — detect by time but never block
+  if(s.alwaysOpen){
+    const h = new Date().getHours();
+    if(h >= s.am.open  && h < s.am.close)  return 'Morning';
+    if(h >= s.md.open  && h < s.md.close)  return 'Midday';
+    if(h >= s.eod.open && h < s.eod.close) return 'EOD';
+    // Outside all windows but alwaysOpen — pick nearest session
+    const h24 = h;
+    if(h24 < s.am.open)  return 'Morning'; // before morning = morning
+    if(h24 < s.md.open)  return 'Morning'; // between morning close and midday = morning
+    if(h24 < s.eod.open) return 'Midday';  // between midday close and eod = midday
+    return 'EOD';
+  }
+  // Time-gated mode
   const h = new Date().getHours();
-  const m = new Date().getMinutes();
-  const t = h + m/60;                 // decimal hours
-  if(t >= 6   && t < 10)   return 'Morning';  // 6:00 AM – 9:59 AM
-  if(t >= 12  && t < 14.5) return 'Midday';   // 12:00 PM – 2:29 PM
-  if(t >= 17  && t < 22)   return 'EOD';      // 5:00 PM – 9:59 PM
+  if(h >= s.am.open  && h < s.am.close)  return 'Morning';
+  if(h >= s.md.open  && h < s.md.close)  return 'Midday';
+  if(h >= s.eod.open && h < s.eod.close) return 'EOD';
   return 'Closed';
 }
 
+
+
 // Returns true for ALL roles — Agents now submit Morning, Midday AND EOD
 function sessionOpen(){
-  return session !== 'Closed';
+  return true; // always open
 }
 
 function updateSessionPills(){
@@ -704,13 +857,13 @@ function init(){
   const h = new Date().getHours();
   const sessNames = {Morning:'Morning session', Midday:'Midday session', EOD:'EOD session', Closed:'Closed'};
   document.getElementById('sessionText').textContent =
-    session === 'Closed' ? 'Form closed · Opens Morning, Midday and EOD sessions' : sessNames[session]+' session is open';
+    sessNames[session]+' session is open';
   document.getElementById('formTitle').textContent =
     session === 'EOD' ? 'Close of Day' : session;
   updateSessionPills();
   loadNames(); loadDropdowns(); loadAdminFields();
-  refreshFromGoogleSheets(); captureGPS(); refreshAdmin(); renderQuestionGuide(); initQM();
-  if(session === 'Closed') showClosed('Morning session · Midday session · EOD session');
+  refreshFromGoogleSheets(); captureGPS(); refreshAdmin(); renderQuestionGuide(); initQM(); loadSessSettings();
+  // Sessions always open — no closed state
   document.addEventListener('click', e => {
     if(!e.target.closest('.ms'))
       document.querySelectorAll('.ms').forEach(x=>x.classList.remove('open'));
@@ -824,9 +977,9 @@ function setTab(t){
   document.getElementById('adminTab').classList.toggle('active',  t==='admin');
   document.getElementById('submitPage').classList.toggle('hidden', t!=='submit');
   document.getElementById('adminPage').classList.toggle('hidden',  t!=='admin');
-  const showBottom = t==='submit' && session!=='Closed';
+  const showBottom = t==='submit'; // always show submit button
   document.querySelector('.bottom').classList.toggle('hidden', !showBottom);
-  if(t==='admin') renderActivity();
+  if(t==='admin') { renderActivity(); updateStats(); loadSessSettings(); }
 }
 
 function setRole(r, btn){
@@ -837,13 +990,9 @@ function setRole(r, btn){
   loadNames();
   afterNameSelected();
   // All roles see all open sessions — no blocking
-  if(session === 'Closed'){
-    showClosed('Morning session · Midday session · EOD session');
-  } else {
-    document.getElementById('closedCard').classList.add('hidden');
-    document.getElementById('formCard').classList.remove('hidden');
-    document.querySelector('.bottom').classList.remove('hidden');
-  }
+  document.getElementById('closedCard').classList.add('hidden');
+  document.getElementById('formCard').classList.remove('hidden');
+  document.querySelector('.bottom').classList.remove('hidden');
 }
 
 // ════════════════════════════════════════════
@@ -1121,7 +1270,7 @@ function updateRequiredLabels(){
 
 function submitReport(){
   const name = firstMS('name');
-  if(session==='Closed')     return alert('Form is closed.');
+  // No time restriction — always allow submission
   if(!name)                  return alert('Please select your name first.');
 
   // ── Validate required fields based on Question Manager settings ──
