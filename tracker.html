@@ -721,6 +721,49 @@ const defaultMapping = [
 // ════════════════════════════════════════════
 //  STATE
 // ════════════════════════════════════════════
+const SESS_KEY = 'fla_session_settings';
+
+const DEFAULT_SESS = {
+  am:  { open: 5,  close: 11 },  // 5:00 AM – 10:59 AM
+  md:  { open: 11, close: 16 },  // 11:00 AM – 3:59 PM
+  eod: { open: 16, close: 21 },  // 4:00 PM – 9:00 PM
+  alwaysOpen: true,               // default = always open
+};
+
+function getSessSettings(){
+  try { return JSON.parse(localStorage.getItem(SESS_KEY)) || DEFAULT_SESS; }
+  catch { return DEFAULT_SESS; }
+}
+
+function getSession(){
+  // Sessions are always open — no time restriction
+  // Session is determined by time of day but never blocks submission
+  const s = getSessSettings();
+  // Always open — detect by time but never block
+  if(s.alwaysOpen){
+    const h = new Date().getHours();
+    if(h >= s.am.open  && h < s.am.close)  return 'Morning';
+    if(h >= s.md.open  && h < s.md.close)  return 'Midday';
+    if(h >= s.eod.open && h < s.eod.close) return 'EOD';
+    // Outside all windows but alwaysOpen — pick nearest session
+    const h24 = h;
+    if(h24 < s.am.open)  return 'Morning'; // before morning = morning
+    if(h24 < s.md.open)  return 'Morning'; // between morning close and midday = morning
+    if(h24 < s.eod.open) return 'Midday';  // between midday close and eod = midday
+    return 'EOD';
+  }
+  // Time-gated mode
+  const h = new Date().getHours();
+  if(h >= s.am.open  && h < s.am.close)  return 'Morning';
+  if(h >= s.md.open  && h < s.md.close)  return 'Midday';
+  if(h >= s.eod.open && h < s.eod.close) return 'EOD';
+  return 'Closed';
+}
+
+function sessionOpen(){
+  return true; // always open
+}
+
 let role     = 'Agent';
 let session  = getSession();
 let isAdmin  = false;
@@ -744,19 +787,6 @@ const getAdminPin= () => localStorage.getItem(PIN_KEY) || '2026';
 //  Stored in localStorage — no code change needed
 // ════════════════════════════════════════════
 
-const SESS_KEY = 'fla_session_settings';
-
-const DEFAULT_SESS = {
-  am:  { open: 5,  close: 11 },  // 5:00 AM – 10:59 AM
-  md:  { open: 11, close: 16 },  // 11:00 AM – 3:59 PM
-  eod: { open: 16, close: 21 },  // 4:00 PM – 9:00 PM
-  alwaysOpen: true,               // default = always open
-};
-
-function getSessSettings(){
-  try { return JSON.parse(localStorage.getItem(SESS_KEY)) || DEFAULT_SESS; }
-  catch { return DEFAULT_SESS; }
-}
 
 function loadSessSettings(){
   const s = getSessSettings();
@@ -867,7 +897,7 @@ function init(){
   document.addEventListener('click', e => {
     if(!e.target.closest('.ms'))
       document.querySelectorAll('.ms').forEach(x=>x.classList.remove('open'));
-    if(!e.target.closest('.pin-box') && !e.target.closest('#adminAccess'))
+    if(!e.target.closest('.pin-overlay') && !e.target.closest('#adminAccess'))
       document.getElementById('pinOverlay').classList.remove('open');
   });
 }
