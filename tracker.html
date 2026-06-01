@@ -1038,7 +1038,7 @@ function updateSessionPills(){
 // ════════════════════════════════════════════
 //  INIT
 // ════════════════════════════════════════════
-async function init(){
+function init(){
   const h = new Date().getHours();
   const sessNames = {Morning:'Morning session', Midday:'Midday session', EOD:'EOD session', Closed:'Closed'};
   document.getElementById('sessionText').textContent =
@@ -1047,9 +1047,10 @@ async function init(){
     session === 'EOD' ? 'Close of Day' : session;
   updateSessionPills();
   loadNames(); loadDropdowns(); loadAdminFields();
-  await refreshFromGoogleSheets(); // wait for names to load from Sheets
+  // Load from Sheets in background — don't block the UI
+  refreshFromGoogleSheets().catch(()=>{});
   captureGPS(); refreshAdmin(); renderQuestionGuide(); initQM(); loadSessSettings();
-  pullQuestionsFromSheets().catch(()=>{}); // sync questions silently
+  pullQuestionsFromSheets().catch(()=>{});
   // Sessions always open — no closed state
   document.addEventListener('click', e => {
     if(!e.target.closest('.ms'))
@@ -1695,6 +1696,9 @@ function rowsToObjects(rows){
 async function refreshFromGoogleSheets(){
   const mapUrl  = localStorage.getItem('ic_mapping_sheet_url')  || DEFAULT_MAPPING_URL;
   const dropUrl = localStorage.getItem('ic_dropdown_sheet_url') || DEFAULT_DROPDOWN_URL;
+  // Show loading indicator
+  const st = document.getElementById('sessionText');
+  if(st) st.textContent = 'Loading team data…';
   try{
     if(mapUrl){
       const txt  = await fetch(mapUrl,{cache:'no-store'}).then(r=>r.text());
@@ -1715,7 +1719,18 @@ async function refreshFromGoogleSheets(){
       if(cfg.challenges.length)saveConfig(cfg);
     }
     loadNames(); loadDropdowns(); refreshAdmin();
-  }catch(e){ console.log('Sheet refresh failed',e); }
+    // Update session text now that data is loaded
+    const sessNames2 = {Morning:'Morning session', Midday:'Midday session', EOD:'EOD session'};
+    const st2 = document.getElementById('sessionText');
+    if(st2) st2.textContent = sessNames2[session]+' session is open';
+  }catch(e){ 
+    console.log('Sheet refresh failed',e);
+    const st3 = document.getElementById('sessionText');
+    if(st3){
+      const sessNames3 = {Morning:'Morning session', Midday:'Midday session', EOD:'EOD session'};
+      st3.textContent = sessNames3[session]+' session is open';
+    }
+  }
 }
 
 function saveBackend(){
