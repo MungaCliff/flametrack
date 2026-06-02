@@ -271,265 +271,8 @@ small{font-size:12px;color:var(--muted);line-height:1.45}
         </div>
 
         <!-- Agent Morning -->
-        <div id="agentMorning" class="hidden" style="margin-top:12px">
-          <label>Target demos today</label>
-          <input type="number" id="agentTargetDemos" value="0" min="0" inputmode="numeric">
-          <div style="height:10px"></div>
-          <label>Target leads today</label>
-          <input type="number" id="agentTargetLeads" value="0" min="0" inputmode="numeric">
-          <div style="height:10px"></div>
-          <label>Planned area / route</label>
-          <textarea id="agentPlan" placeholder="Where will you be today?"></textarea>
-        </div>
-
-        <!-- Agent Midday -->
-        <div id="agentMidday" class="hidden" style="margin-top:12px">
-          <label>Done so far (select all)</label>
-          <div id="agentDoneSoFarBox"></div>
-          <div style="height:10px"></div>
-          <label>Any blocker right now?</label>
-          <div id="agentBlockerBox"></div>
-          <div style="height:10px"></div>
-          <label>Demos done so far</label>
-          <input type="number" id="agentMiddayDemos" value="0" min="0" inputmode="numeric">
-        </div>
-
-        <!-- Agent EOD -->
-        <div id="agentEOD" class="hidden" style="margin-top:12px">
-          <label>Demos done today</label>
-          <input type="number" id="agentDemos" value="0" min="0" inputmode="numeric">
-          <div style="height:10px"></div>
-          <label>Leads generated today</label>
-          <input type="number" id="agentLeads" value="0" min="0" inputmode="numeric">
-          <div style="height:10px"></div>
-          <label>IDC sold today</label>
-          <input type="number" id="agentSold" value="0" min="0" inputmode="numeric">
-          <div style="height:10px"></div>
-          <label>Stock on hand (IDC / pots)</label>
-          <input id="agentStock" placeholder="e.g. 5-IDC, 1-FP, 2-6L, 40-4L">
-          <div style="height:10px"></div>
-          <label>Was coaching done?</label>
-          <div id="agentCoachHeldBox"></div>
-          <div id="agentCoachBlock" class="hidden" style="margin-top:10px">
-            <label>Topic(s) covered</label>
-            <div id="agentTopicsBox"></div>
-          </div>
-        </div>
-
-        <!-- TL Questions -->
-        <!-- TL Morning -->
-        <div id="tlMorning" class="hidden" style="margin-top:12px">
-          <label>Agents accompanying today</label>
-          <div id="tlAgentsBox"></div>
-          <div style="height:10px"></div>
-          <label>Main focus today</label>
-          <div id="tlFocusBox"></div>
-          <div style="height:10px"></div>
-          <label>Team target for today (IC units)</label>
-          <input type="number" id="tlTargetToday" value="0" min="0" inputmode="numeric">
-          <div style="height:10px"></div>
-          <label>Planned clusters to visit</label>
-          <input id="tlPlannedClusters" placeholder="e.g. CBD, Eastlands, Kasarani">
-        </div>
-
-        <!-- TL Midday -->
-        <div id="tlMidday" class="hidden" style="margin-top:12px">
-          <label>Done so far (select all)</label>
-          <div id="tlDoneSoFarBox"></div>
-          <div style="height:10px"></div>
-          <label>Any blocker right now?</label>
-          <div id="tlBlockerBox"></div>
-          <div style="height:10px"></div>
-          <label>Need RSM support?</label>
-          <div id="tlSupportBox"></div>
-          <div style="height:10px"></div>
-          <label>IC units sold by team so far</label>
-          <input type="number" id="tlMiddaySold" value="0" min="0" inputmode="numeric">
-        </div>
-
-        <!-- TL EOD -->
-        <div id="tlEOD" class="hidden" style="margin-top:12px">
-          <label>Agents coached / accompanied</label>
-          <div id="tlAgentsEodBox"></div>
-          <div style="height:10px"></div>
-          <label>Demo location today</label>
-          <div id="tlDemoLocationsBox"></div>
-          <div style="height:10px"></div>
-          <label>Was a coaching session held?</label>
-          <div id="tlCoachHeldBox"></div>
-          <div id="tlCoachBlock" class="hidden" style="margin-top:10px">
-            <label>Topics covered</label>
-            <div id="tlTopicsBox"></div>
-          </div>
-          <div style="height:10px"></div>
-          <label>IDC / pots in cluster</label>
-          <input id="tlStock" placeholder="e.g. 5-IDC, 1-FP, 2-6L, 40-4L">
-          <div class="row" style="margin-top:10px">
-            <div><label>IDC opening</label><input type="number" id="tlOpen" value="0" min="0" inputmode="numeric"></div>
-            <div><label>IDC closing</label><input type="number" id="tlClose" value="0" min="0" inputmode="numeric"></div>
-          </div>
-        </div>
-
-        <!-- RSM Morning -->
-        <div id="rsmMorning" class="hidden" style="margin-top:12px">
-          <label>TLs accompanying today</label>
-          <div id="rsmTLsBox"></div>
-          <div style="height:10px"></div>
-          <label>Main focus today</label>
-          <div id="rsmFocusBox"></div>
-          <div style="height:10px"></div>
-          <label>Clusters to visit today</label>
-          <div id="rsmClustersBox"></div>
-          <div style="height:10px"></div>
-          <label>Team target for today (IC units)</label>
-          <input type="number" id="rsmTargetToday" value="0" min="0" inputmode="numeric">
-        </div>
-
-        <!-- RSM Midday -->
-        <div id="rsmMidday" class="hidden" style="margin-top:12px">
-          <label>Done so far (select all)</label>
-          <div id="rsmDoneSoFarBox"></div>
-          <div style="height:10px"></div>
-          <label>Any blocker right now?</label>
-          <div id="rsmBlockerBox"></div>
-          <div style="height:10px"></div>
-          <label>Need HQ support?</label>
-          <div id="rsmSupportBox"></div>
-          <div style="height:10px"></div>
-          <label>IC units sold by team so far</label>
-          <input type="number" id="rsmMiddaySold" value="0" min="0" inputmode="numeric">
-        </div>
-
-        <!-- RSM EOD -->
-        <div id="rsmEOD" class="hidden" style="margin-top:12px">
-          <label>TLs coached / accompanied</label>
-          <div id="rsmTLsEodBox"></div>
-          <div style="height:10px"></div>
-          <label>Demo location today</label>
-          <div id="rsmDemoLocationsBox"></div>
-          <div style="height:10px"></div>
-          <label>Was a coaching session held?</label>
-          <div id="rsmCoachHeldBox"></div>
-          <div id="rsmCoachBlock" class="hidden" style="margin-top:10px">
-            <label>Topics covered</label>
-            <div id="rsmTopicsBox"></div>
-          </div>
-          <div style="height:10px"></div>
-          <label>Biggest gap found</label>
-          <textarea id="rsmGap" placeholder="Describe the main gap observed today"></textarea>
-        </div>
-
-
-        <!-- Trainer Morning -->
-        <div id="trainerMorning" class="hidden" style="margin-top:12px">
-          <label>Training session type today</label>
-          <div id="trainerSessionTypeBox"></div>
-          <div style="height:10px"></div>
-          <label>Agents to train today</label>
-          <div id="trainerAgentsMorningBox"></div>
-          <div style="height:10px"></div>
-          <label>Topics planned for today</label>
-          <div id="trainerTopicsMorningBox"></div>
-          <div style="height:10px"></div>
-          <label>Training target (agents to complete)</label>
-          <input type="number" id="trainerTargetToday" value="0" min="0" inputmode="numeric">
-        </div>
-
-        <!-- Trainer Midday -->
-        <div id="trainerMidday" class="hidden" style="margin-top:12px">
-          <label>Done so far (select all)</label>
-          <div id="trainerDoneSoFarBox"></div>
-          <div style="height:10px"></div>
-          <label>Any blocker right now?</label>
-          <div id="trainerBlockerBox"></div>
-          <div style="height:10px"></div>
-          <label>Agents completed training so far</label>
-          <input type="number" id="trainerMiddayCount" value="0" min="0" inputmode="numeric">
-          <div style="height:10px"></div>
-          <label>Early observations / issues</label>
-          <textarea id="trainerMiddayNotes" placeholder="Any issues noticed so far in the training session"></textarea>
-        </div>
-
-        <!-- Trainer EOD -->
-        <div id="trainerEOD" class="hidden" style="margin-top:12px">
-          <label>Agents trained today</label>
-          <div id="trainerAgentsBox"></div>
-          <div style="height:10px"></div>
-          <label>Training topics covered</label>
-          <div id="trainerTopicsBox"></div>
-          <div style="height:10px"></div>
-          <label>Product knowledge avg score (1-10)</label>
-          <input type="number" id="trainerProductScore" value="0" min="0" max="10" inputmode="numeric">
-          <div style="height:10px"></div>
-          <label>Conversion rate discussed?</label>
-          <div id="trainerConversionBox"></div>
-          <div id="trainerConversionBlock" class="hidden" style="margin-top:10px">
-            <label>Avg conversion rate of agents (%)</label>
-            <input type="number" id="trainerConvRate" value="0" min="0" max="100" inputmode="numeric">
-          </div>
-          <div style="height:10px"></div>
-          <label>Portfolio health — repayment discussed?</label>
-          <div id="trainerRepayBox"></div>
-          <div id="trainerRepayBlock" class="hidden" style="margin-top:10px">
-            <label>Avg repayment rate of agents (%)</label>
-            <input type="number" id="trainerRepayRate" value="0" min="0" max="100" inputmode="numeric">
-            <div style="height:8px"></div>
-            <label>Customer usage rate (%)</label>
-            <input type="number" id="trainerUsageRate" value="0" min="0" max="100" inputmode="numeric">
-          </div>
-          <div style="height:10px"></div>
-          <label>Company policy topics covered</label>
-          <div id="trainerPolicyBox"></div>
-          <div style="height:10px"></div>
-          <label>Agents who passed assessment</label>
-          <input type="number" id="trainerPassCount" value="0" min="0" inputmode="numeric">
-          <div style="height:10px"></div>
-          <label>Key gap observed in agents today</label>
-          <textarea id="trainerGap" placeholder="e.g. Agents weak on objection handling"></textarea>
-          <div style="height:10px"></div>
-          <label>Action plan for next session</label>
-          <textarea id="trainerAction" placeholder="e.g. Focus next session on demo technique"></textarea>
-        </div>
-
-        <!-- Clerk Morning (same as Agent Morning) -->
-        <div id="clerkMorning" class="hidden" style="margin-top:12px">
-          <div id="clerkMorningContent"><!-- populated same as agentMorning --></div>
-        </div>
-        <!-- Clerk Midday (same as Agent Midday) -->
-        <div id="clerkMidday" class="hidden" style="margin-top:12px">
-          <div id="clerkMiddayContent"><!-- populated same as agentMidday --></div>
-        </div>
-        <!-- Clerk EOD (Agent EOD + extra clerk fields) -->
-        <div id="clerkEOD" class="hidden" style="margin-top:12px">
-          <!-- Reuse agent EOD questions -->
-          <label>Total demo done today?</label>
-          <input type="number" id="clerkDemos" value="0" min="0" inputmode="numeric">
-          <div style="height:10px"></div>
-          <label>How many leads generated today?</label>
-          <input type="number" id="clerkLeads" value="0" min="0" inputmode="numeric">
-          <div style="height:10px"></div>
-          <label>How many sales done today?</label>
-          <input type="number" id="clerkSales" value="0" min="0" inputmode="numeric">
-          <div style="height:10px"></div>
-          <label>Did you boil water / cook?</label>
-          <div id="clerkBoiledBox"></div>
-          <div style="height:10px"></div>
-          <label>What have you trained customers on?</label>
-          <div id="clerkTrainedBox"></div>
-          <div style="height:10px"></div>
-          <label>Was coaching done?</label>
-          <div id="clerkCoachHeldBox"></div>
-          <div id="clerkCoachBlock" class="hidden" style="margin-top:10px">
-            <label>What was the topic?</label>
-            <div id="clerkTopicsBox"></div>
-          </div>
-          <div style="height:10px"></div>
-          <label>How many customers paid first installment?</label>
-          <input type="number" id="clerkFirstInstallment" value="0" min="0" inputmode="numeric">
-          <div style="height:10px"></div>
-          <label>Key challenge today</label>
-          <div id="clerkChallengeBox"></div>
-        </div>
+        <!-- Dynamic form section — rendered by renderDynamicForm() -->
+        <div id="dynamicFormSection" style="margin-top:12px"></div>
         <div style="height:12px"></div>
         <label>Key challenge today</label>
         <div id="keyChallengeBox"></div>
@@ -1219,6 +962,83 @@ function saveDropdowns(){
 
 function lines(id){ return document.getElementById(id).value.split('\n').map(x=>x.trim()).filter(Boolean); }
 
+
+// ════════════════════════════════════════════
+//  DYNAMIC FORM RENDERER
+//  Admin changes in Question Manager reflect
+//  immediately to all users
+// ════════════════════════════════════════════
+
+function renderDynamicForm(){
+  const sectionKey = getSectionKey();
+  if(!sectionKey) return;
+  const qs = getQuestions(sectionKey);
+  const container = document.getElementById('dynamicFormSection');
+  if(!container) return;
+  let html = '';
+  qs.forEach((q,i) => {
+    const req = q.required ? ' <span style="color:var(--red);font-weight:900">*</span>' : '';
+    html += `<div style="margin-top:12px" id="dq_wrap_${i}">`;
+    html += `<label>${q.label}${req}</label>`;
+    if(q.type==='number')      html += `<input type="number" id="dq_${i}" value="0" min="0" inputmode="numeric">`;
+    else if(q.type==='text')   html += `<input type="text" id="dq_${i}" placeholder="">`;
+    else if(q.type==='textarea') html += `<textarea id="dq_${i}" rows="3"></textarea>`;
+    else html += `<div id="dq_ms_${i}"></div>`;
+    html += `</div>`;
+  });
+  container.innerHTML = html;
+  // Render dropdowns/multi-selects
+  const cfg = getConfig();
+  qs.forEach((q,i) => {
+    if(!['yesno','select','multiselect'].includes(q.type)) return;
+    let opts = q.options && q.options.length ? [...q.options] : [];
+    let multiple = q.type==='multiselect';
+    if(q.type==='yesno'){ opts=['No','Yes']; multiple=false; }
+    if(!opts.length){
+      const lbl = q.label.toLowerCase();
+      if(lbl.includes('challenge')) opts = cfg.challenges||[];
+      else if(lbl.includes('topic')) opts = cfg.topics||[];
+      else if(lbl.includes('location')) opts = cfg.demoLocations||[];
+      else if(lbl.includes('blocker')) opts = cfg.blockers||defaultConfig.blockers;
+      else if(lbl.includes('done so far')) opts = cfg.doneSoFar||defaultConfig.doneSoFar;
+      else if(lbl.includes('agent')&&lbl.includes('train')) opts = [...new Set(getMapping().map(x=>x.AgentName).filter(Boolean))];
+      else if(lbl.includes('agent')) opts = [...new Set(getMapping().map(x=>x.AgentName).filter(Boolean))];
+      else if(lbl.includes('cluster')) opts = [...new Set(getMapping().map(x=>x.Cluster).filter(Boolean))];
+      else if(lbl.includes('tl')) opts = [...new Set(getMapping().map(x=>x.TLName).filter(Boolean))];
+      else opts = ['Yes','No'];
+    }
+    renderMultiSelect(`dq_ms_${i}`,`dq_ms_${i}`,opts,multiple,'Select...');
+  });
+}
+
+function getDynamicFormData(){
+  const sectionKey = getSectionKey(); if(!sectionKey) return {};
+  const qs = getQuestions(sectionKey);
+  const data = {};
+  qs.forEach((q,i) => {
+    const key = q.id||`q${i}`;
+    if(['yesno','select','multiselect'].includes(q.type))
+      data[key] = q.type==='multiselect' ? getMS(`dq_ms_${i}`) : firstMS(`dq_ms_${i}`);
+    else { const el=document.getElementById(`dq_${i}`); data[key]=el?el.value:''; }
+  });
+  return data;
+}
+
+function validateDynamicForm(){
+  const sectionKey = getSectionKey(); if(!sectionKey) return [];
+  const qs = getQuestions(sectionKey);
+  const missing = [];
+  qs.forEach((q,i) => {
+    if(!q.required) return;
+    let val = '';
+    if(['yesno','select','multiselect'].includes(q.type))
+      val = q.type==='multiselect' ? getMS(`dq_ms_${i}`) : firstMS(`dq_ms_${i}`);
+    else { const el=document.getElementById(`dq_${i}`); val=el?el.value:''; }
+    if(!val||val==='0'||val.trim()==='') missing.push(q.label);
+  });
+  return missing;
+}
+
 // ════════════════════════════════════════════
 //  AFTER NAME SELECTED — show right questions
 // ════════════════════════════════════════════
@@ -1226,39 +1046,7 @@ function afterNameSelected(){
   const name = firstMS('name'), has = !!name;
   document.getElementById('needName').classList.toggle('hidden', has);
   document.getElementById('dynamicForm').classList.toggle('hidden', !has);
-  ['agentMorning','agentMidday','agentEOD',
-   'tlMorning','tlMidday','tlEOD',
-   'rsmMorning','rsmMidday','rsmEOD',
-   'trainerMorning','trainerMidday','trainerEOD',
-   'clerkMorning','clerkMidday','clerkEOD']
-    .forEach(id => { const el=document.getElementById(id); if(el) el.classList.add('hidden'); });
   if(!has) return;
-
-  // Show section matching role + current session
-  if(role==='Agent'   && session==='Morning') document.getElementById('agentMorning').classList.remove('hidden');
-  if(role==='Agent'   && session==='Midday')  document.getElementById('agentMidday').classList.remove('hidden');
-  if(role==='Agent'   && session==='EOD')     document.getElementById('agentEOD').classList.remove('hidden');
-  const showSec = (id) => { const el=document.getElementById(id); if(el) el.classList.remove('hidden'); };
-  if(role==='TL'){
-    if(session==='Morning') showSec('tlMorning');
-    else if(session==='Midday') showSec('tlMidday');
-    else showSec('tlEOD');
-  }
-  if(role==='RSM'){
-    if(session==='Morning') showSec('rsmMorning');
-    else if(session==='Midday') showSec('rsmMidday');
-    else showSec('rsmEOD');
-  }
-  if(role==='Trainer'){
-    if(session==='Morning') showSec('trainerMorning');
-    else if(session==='Midday') showSec('trainerMidday');
-    else showSec('trainerEOD');
-  }
-  if(role==='Clerk'){
-    if(session==='Morning') showSec('clerkMorning');
-    else if(session==='Midday') showSec('clerkMidday');
-    else showSec('clerkEOD');
-  }
 
   // Pre-fill country/region/cluster from mapping
   const m = getMapping().find(x=>x.AgentName===name||x.TLName===name||x.RSMName===name||x.TrainerName===name||x.ClerkName===name);
@@ -1269,7 +1057,8 @@ function afterNameSelected(){
     updateMSLabel('clusterSelect', 'Select cluster');
   }
   loadDropdowns();
-  updateRequiredLabels();
+  // Render questions dynamically from Question Manager
+  renderDynamicForm();
 }
 
 // ════════════════════════════════════════════
@@ -1456,6 +1245,10 @@ function updateRequiredLabels(){
 
 function submitReport(){
   const name = firstMS('name');
+  // Collect all dynamic form data
+  const dynamicData = getDynamicFormData();
+  Object.assign(r, dynamicData);
+
   if(role==='Clerk' && session==='Morning'){
     data.targetDemos   = document.getElementById('agentTargetDemos')?.value;
     data.targetLeads   = document.getElementById('agentTargetLeads')?.value;
@@ -1480,10 +1273,10 @@ function submitReport(){
   // No time restriction — always allow submission
   if(!name)                  return alert('Please select your name first.');
 
-  // ── Validate required fields based on Question Manager settings ──
-  const missing = validateRequiredFields();
+  // ── Validate required fields from Question Manager ──
+  const missing = validateDynamicForm();
   if(missing.length){
-    alert('⚠️ Please fill in required fields:\n\n• '+missing.join('\n• '));
+    alert('Please fill in required fields:\n\n• '+missing.join('\n• '));
     return;
   }
 
