@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>Field Live Tracker — Dashboard</title>
+<title>Field Activities Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 :root{--or:#F07020;--or-dk:#C85010;--or-lt:#FFF4EC;--or-bd:#FDDBB8;--border:#e0e0e0;--muted:#888;--ink:#1a1a1a;--green:#1a7a30}
@@ -56,7 +56,7 @@ tr:hover td{background:#fffaf5}
 <div class="app">
 
 <header>
-  <h1>🔥 Field Live Tracker — Dashboard</h1>
+  <h1>🔥 Field Activities Dashboard</h1>
   <a href="/tracker.html">← Submit Report</a>
 </header>
 
@@ -161,49 +161,68 @@ tr:hover td{background:#fffaf5}
 
 <script>
 // ── CONFIG ──
-const SHEET_URL = 'https://docs.google.com/spreadsheets/d/14TryzFqbw3r4hXth3FI8eOHBs2rGqhdlRI585UePZy4/gviz/tq?tqx=out:json&sheet=Submissions';
+// Read from Apps Script which returns submissions as JSON
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbznjen5lLbxc4S06cIva8LMbo5TdAaxHuvIPvNKjYGpnsEVSBdiHtQYjjsNOAsdD-mc/exec';
+const SHEET_CSV_URL   = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRNHXmIzq53E5yMoUCeN6n-MVXykcefh6IpUIHzPjnljMV78vHW0ZlGs3OrTDaVxNBtA83IPqhevSj-/pub?gid=1107018990&single=true&output=csv';
 
 let allData = [];
 let charts = {};
 
 // ── LOAD DATA ──
+function parseCSVtoRows(txt){
+  const lines = txt.trim().split('\n');
+  if(lines.length < 2) return [];
+  // headers: Timestamp,Role,Name,Session,Country,Region,Cluster,Lat,Lng,Accuracy,Ward,Address,Data,Notes,Challenge,SubmittedAt
+  const headers = lines[0].split(',').map(h=>h.replace(/"/g,'').trim().toLowerCase());
+  return lines.slice(1).map(line => {
+    // Handle quoted CSV
+    const cols = [];
+    let val='', inQ=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"') inQ=!inQ;
+      else if(ch===',' && !inQ){ cols.push(val.trim()); val=''; }
+      else val+=ch;
+    }
+    cols.push(val.trim());
+    return {
+      timestamp: cols[0]||'',
+      role:      cols[1]||'',
+      name:      cols[2]||'',
+      session:   cols[3]||'',
+      country:   cols[4]||'',
+      region:    cols[5]||'',
+      cluster:   cols[6]||'',
+      lat:       parseFloat(cols[7])||null,
+      lng:       parseFloat(cols[8])||null,
+      accuracy:  cols[9]||'',
+      ward:      cols[10]||'',
+      address:   cols[11]||'',
+      data:      cols[12]||'',
+      notes:     cols[13]||'',
+      challenge: cols[14]||'',
+    };
+  }).filter(r=>r.role&&r.name);
+}
+
 async function loadData(){
+  const errEl = document.getElementById('errorMsg');
+  errEl.classList.add('hidden');
   try{
-    const resp = await fetch(SHEET_URL + '&v=' + Date.now());
+    const resp = await fetch(SHEET_CSV_URL + '&v=' + Date.now(), {cache:'no-store'});
     const txt  = await resp.text();
-    // Google wraps response in google.visualization.Query.setResponse(...)
-    const json = JSON.parse(txt.replace(/^.*?\(/, '').replace(/\);?\s*$/, ''));
-    const rows = json.table.rows;
-    const cols = json.table.cols;
-
-    allData = rows.filter(r=>r.c&&r.c[0]).map(r => {
-      const get = (i) => r.c[i] ? (r.c[i].f || r.c[i].v || '') : '';
-      return {
-        timestamp: get(0),
-        role:      get(1),
-        name:      get(2),
-        session:   get(3),
-        country:   get(4),
-        region:    get(5),
-        cluster:   get(6),
-        lat:       r.c[7] ? r.c[7].v : null,
-        lng:       r.c[8] ? r.c[8].v : null,
-        accuracy:  get(9),
-        ward:      get(10),
-        address:   get(11),
-        data:      get(12),
-        notes:     get(13),
-        challenge: get(14),
-      };
-    });
-
+    allData = parseCSVtoRows(txt);
+    if(!allData.length){
+      errEl.classList.remove('hidden');
+      errEl.textContent = 'No data found. Make sure your Submissions tab has data and the sheet is published publicly.';
+      return;
+    }
     populateFilters();
     renderAll(allData);
     loadMap(allData);
-
   }catch(e){
-    document.getElementById('errorMsg').classList.remove('hidden');
-    document.getElementById('errorMsg').textContent = 'Could not load data. Make sure your Google Sheet is published publicly. Error: ' + e.message;
+    errEl.classList.remove('hidden');
+    errEl.textContent = 'Could not load data: ' + e.message;
     console.error(e);
   }
 }
