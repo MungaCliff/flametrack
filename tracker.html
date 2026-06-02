@@ -183,6 +183,10 @@ textarea{min-height:80px;resize:none}
 
 small{font-size:12px;color:var(--muted);line-height:1.45}
 .hr{height:1px;background:var(--border);margin:12px 0}
+.f{flex:1}
+.note{font-size:11px;color:var(--muted);margin-top:3px}
+.a-btn{width:100%;border:0;border-radius:12px;padding:13px;background:var(--or);
+  color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:Arial}
 </style>
 </head>
 <body>
@@ -243,14 +247,7 @@ small{font-size:12px;color:var(--muted);line-height:1.45}
       <div class="sess-pill" id="sp-EOD">🌆 EOD</div>
     </div>
 
-    <div id="closedCard" class="card hidden">
-      <b>🔒 Form Closed</b>
-      <p class="small" id="closedMsg">Morning session · Midday session · EOD session</p>
-      <div style="margin-top:10px;background:var(--or-lt);border:1px solid var(--or-bd);border-radius:10px;padding:12px;text-align:center">
-        <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:4px">Next session opens in</div>
-        <div id="countdown" style="font-size:28px;font-weight:900;color:var(--or);font-family:monospace;letter-spacing:.04em">--:--:--</div>
-        <div id="nextSessLabel" style="font-size:12px;color:var(--muted);margin-top:4px"></div>
-      </div>
+    
     </div>
 
     <div id="formCard" class="card">
@@ -876,7 +873,7 @@ const defaultMapping = []; // always load from Google Sheets
 // ════════════════════════════════════════════
 //  STATE
 // ════════════════════════════════════════════
-const SESS_KEY = 'fla_session_settings';
+const SESS_KEY = 'fla_session_v2'; // v2 — reset to alwaysOpen:true
 
 const DEFAULT_SESS = {
   am:  { open: 5,  close: 11 },  // 5:00 AM – 10:59 AM
@@ -887,37 +884,18 @@ const DEFAULT_SESS = {
 
 function getSessSettings(){
   try { return JSON.parse(localStorage.getItem(SESS_KEY)) || DEFAULT_SESS; }
-  catch { return DEFAULT_SESS; }
+  catch(e) { return DEFAULT_SESS; }
 }
 
 function getSession(){
-  // Sessions are always open — no time restriction
-  // Session is determined by time of day but never blocks submission
-  const s = getSessSettings();
-  // Always open — detect by time but never block
-  if(s.alwaysOpen){
-    const h = new Date().getHours();
-    if(h >= s.am.open  && h < s.am.close)  return 'Morning';
-    if(h >= s.md.open  && h < s.md.close)  return 'Midday';
-    if(h >= s.eod.open && h < s.eod.close) return 'EOD';
-    // Outside all windows but alwaysOpen — pick nearest session
-    const h24 = h;
-    if(h24 < s.am.open)  return 'Morning'; // before morning = morning
-    if(h24 < s.md.open)  return 'Morning'; // between morning close and midday = morning
-    if(h24 < s.eod.open) return 'Midday';  // between midday close and eod = midday
-    return 'EOD';
-  }
-  // Time-gated mode
+  // Simple time detection - never blocks submission
   const h = new Date().getHours();
-  if(h >= s.am.open  && h < s.am.close)  return 'Morning';
-  if(h >= s.md.open  && h < s.md.close)  return 'Midday';
-  if(h >= s.eod.open && h < s.eod.close) return 'EOD';
-  return 'Closed';
+  if(h < 12) return 'Morning';
+  if(h < 17) return 'Midday';
+  return 'EOD';
 }
 
-function sessionOpen(){
-  return true; // always open
-}
+function sessionOpen(){ return true; }
 
 let role     = 'Agent';
 let session  = getSession();
@@ -994,9 +972,7 @@ function showSessMsg(type, txt){
 }
 
 // Returns true for ALL roles — Agents now submit Morning, Midday AND EOD
-function sessionOpen(){
-  return true; // always open
-}
+function sessionOpen(){ return true; }
 
 function updateSessionPills(){
   const order = ['Morning','Midday','EOD'];
@@ -1028,7 +1004,10 @@ function init(){
   refreshFromGoogleSheets().catch(()=>{});
   captureGPS(); refreshAdmin(); renderQuestionGuide(); initQM(); loadSessSettings();
   pullQuestionsFromSheets().catch(()=>{});
-  // Sessions always open — no closed state
+  // Always open — hide closed card
+  const cc = document.getElementById('closedCard'); if(cc) cc.classList.add('hidden');
+  const fc = document.getElementById('formCard'); if(fc) fc.classList.remove('hidden');
+  const bb = document.querySelector('.bottom'); if(bb) bb.classList.remove('hidden');
   document.addEventListener('click', e => {
     if(!e.target.closest('.ms'))
       document.querySelectorAll('.ms').forEach(x=>x.classList.remove('open'));
@@ -1037,41 +1016,11 @@ function init(){
   });
 }
 
-function showClosed(msg){
-  document.getElementById('closedCard').classList.remove('hidden');
-  document.getElementById('closedMsg').textContent = msg;
-  document.getElementById('formCard').classList.add('hidden');
-  document.querySelector('.bottom').classList.add('hidden');
-  startCountdown();
-}
+function showClosed(msg){}
 
-function startCountdown(){
-  const WINDOWS = [
-    {h:6,  m:0,  label:'🌅 Morning session'},
-    {h:12, m:0,  label:'☀️ Midday session'},
-    {h:17, m:0,  label:'🌆 EOD session'},
-  ];
-  const tick = () => {
-    const now = new Date();
-    const cur = now.getHours() + now.getMinutes()/60 + now.getSeconds()/3600;
-    const next = WINDOWS.find(w => (w.h + w.m/60) > cur);
-    const el = document.getElementById('countdown');
-    const nl = document.getElementById('nextSessLabel');
-    if(!next){
-      // After 10pm — next is 6am tomorrow
-      const tom = new Date(now); tom.setDate(tom.getDate()+1); tom.setHours(6,0,0,0);
-      const d=tom-now, hh=Math.floor(d/3600000), mm=Math.floor((d%3600000)/60000), ss=Math.floor((d%60000)/1000);
-      if(el) el.textContent = pad(hh)+':'+pad(mm)+':'+pad(ss);
-      if(nl) nl.textContent = '🌅 Morning session opens tomorrow';
-      return;
-    }
-    const nx=new Date(now); nx.setHours(next.h,next.m,0,0);
-    const d=nx-now, hh=Math.floor(d/3600000), mm=Math.floor((d%3600000)/60000), ss=Math.floor((d%60000)/1000);
-    if(el) el.textContent = pad(hh)+':'+pad(mm)+':'+pad(ss);
-    if(nl) nl.textContent = next.label;
-  };
-  tick(); setInterval(tick, 1000);
-}
+const pad = n => String(n).padStart(2,'0');
+
+function startCountdown(){}
 
 // ════════════════════════════════════════════
 //  PIN MODAL
@@ -1144,7 +1093,7 @@ function setTab(t){
   document.getElementById('adminPage').classList.toggle('hidden',  t!=='admin');
   const showBottom = t==='submit'; // always show submit button
   document.querySelector('.bottom').classList.toggle('hidden', !showBottom);
-  if(t==='admin') { renderActivity(); updateStats(); loadSessSettings(); }
+  if(t==='admin') { renderActivity(); refreshAdmin(); loadSessSettings(); }
 }
 
 function setRole(r, btn){
@@ -1152,9 +1101,11 @@ function setRole(r, btn){
   msValues.name = [];
   document.querySelectorAll('.role').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  // Update name placeholder immediately
+  const nameLbl = document.getElementById('ms_label_name');
+  if(nameLbl) nameLbl.textContent = 'Select '+r+' name';
   loadNames();
   afterNameSelected();
-  // All roles see all open sessions — no blocking
   document.getElementById('closedCard').classList.add('hidden');
   document.getElementById('formCard').classList.remove('hidden');
   document.querySelector('.bottom').classList.remove('hidden');
@@ -1231,16 +1182,16 @@ function loadDropdowns(){
   renderMultiSelect('trainerAgentsMorningBox','trainerAgentsMorning',
     [...new Set(m.map(x=>x.AgentName).filter(Boolean))], true, 'Select agent(s)');
   renderMultiSelect('trainerTopicsMorningBox','trainerTopicsMorning',
-    cfg2.trainerTopics||defaultConfig.trainerTopics, true, 'Select topic(s)');
+    defaultConfig.trainerTopics, true, 'Select topic(s)');
   // Trainer dropdowns
   const trainerAgentList = [...new Set(m.map(x=>x.AgentName).filter(Boolean))];
   renderMultiSelect('trainerSessionTypeBox','trainerSessionType',
     ['Classroom training','Field ride-along','One-on-one coaching','Group workshop','Assessment/test','Refresher training'], false, 'Select session type');
   renderMultiSelect('trainerAgentsBox','trainerAgents', trainerAgentList, true, 'Select agent(s)');
-  renderMultiSelect('trainerTopicsBox','trainerTopics', cfg2.trainerTopics||defaultConfig.trainerTopics, true, 'Select topic(s)');
+  renderMultiSelect('trainerTopicsBox','trainerTopics', defaultConfig.trainerTopics, true, 'Select topic(s)');
   renderMultiSelect('trainerConversionBox','trainerConversion',['No','Yes'], false, 'Select yes/no');
   renderMultiSelect('trainerRepayBox','trainerRepay',['No','Yes'], false, 'Select yes/no');
-  renderMultiSelect('trainerPolicyBox','trainerPolicy', cfg2.trainerPolicyTopics||defaultConfig.trainerPolicyTopics, true, 'Select policy topic(s)');
+  renderMultiSelect('trainerPolicyBox','trainerPolicy', defaultConfig.trainerPolicyTopics, true, 'Select policy topic(s)');
 }
 
 function loadAdminFields(){
@@ -1952,9 +1903,9 @@ function publishQuestions(){
 }
 
 
-  const url = localStorage.getItem('ic_backend_url');
+function pushQuestionsToSheets(allQuestions){
+  const url = localStorage.getItem('ic_backend_url') || DEFAULT_BACKEND_URL;
   if(!url) return;
-  // Send as special _questions record
   fetch(url, {
     method:'POST', mode:'no-cors',
     headers:{'Content-Type':'application/json'},
@@ -2274,11 +2225,11 @@ function updateMSLabel(key, placeholder='Select...'){
 //  START
 // ════════════════════════════════════════════
 // ── START APP ──
+
 try {
   init();
 } catch(e) {
   console.error('Init error:', e);
-  // Fallback — show basic form even if init fails
   const st = document.getElementById('sessionText');
   if(st) st.textContent = 'Session is open';
   loadNames();
