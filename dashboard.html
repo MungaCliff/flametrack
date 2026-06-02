@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>Field Live Tracker — Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{--or:#F07020;--or-dk:#C85010;--or-lt:#FFF4EC;--or-bd:#FDDBB8;--border:#e0e0e0;--muted:#888;--ink:#1a1a1a;--green:#1a7a30}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:Arial,sans-serif;background:#f5f5f5;color:var(--ink)}
+.app{max-width:960px;margin:auto;min-height:100vh}
+header{background:var(--or);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+header h1{font-size:20px;font-weight:900}
+header a{color:rgba(255,255,255,.8);font-size:13px;text-decoration:none;background:rgba(255,255,255,.15);padding:6px 12px;border-radius:20px}
+.wrap{padding:16px}
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+@media(min-width:600px){.kpi-grid{grid-template-columns:repeat(4,1fr)}}
+.kpi{background:#fff;border-radius:14px;padding:14px;border:1px solid var(--border);text-align:center}
+.kpi b{font-size:26px;font-weight:900;color:var(--or);display:block}
+.kpi span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:3px;display:block}
+/* FILTERS */
+.filters{background:#fff;border-radius:14px;padding:14px;margin-bottom:16px;border:1px solid var(--border)}
+.filters h3{font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+.filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(min-width:600px){.filter-grid{grid-template-columns:repeat(4,1fr)}}
+.filter-grid select,.filter-grid input{border:1.5px solid var(--border);border-radius:8px;padding:9px;font-size:13px;font-family:Arial;background:#fff;outline:none;width:100%}
+.filter-grid select:focus,.filter-grid input:focus{border-color:var(--or)}
+.btn-apply{margin-top:10px;background:var(--or);color:#fff;border:0;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:Arial}
+/* CHARTS */
+.charts-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:16px}
+@media(min-width:600px){.charts-grid{grid-template-columns:1fr 1fr}}
+.chart-card{background:#fff;border-radius:14px;padding:14px;border:1px solid var(--border)}
+.chart-card h3{font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:12px}
+.chart-wrap{position:relative;height:220px}
+/* TABLE */
+.table-card{background:#fff;border-radius:14px;padding:14px;margin-bottom:16px;border:1px solid var(--border);overflow-x:auto}
+.table-card h3{font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;min-width:600px;font-size:12px}
+th{background:#f8f8f8;padding:8px 10px;text-align:left;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;border-bottom:2px solid var(--border)}
+td{padding:8px 10px;border-bottom:1px solid #f0f0f0;vertical-align:top}
+tr:hover td{background:#fffaf5}
+.badge{display:inline-block;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800;background:var(--or-lt);color:var(--or-dk)}
+/* MAP */
+.map-card{background:#fff;border-radius:14px;padding:14px;margin-bottom:16px;border:1px solid var(--border)}
+.map-card h3{font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:12px}
+#map{height:350px;border-radius:10px;background:#e8e8e8;position:relative;overflow:hidden}
+.map-placeholder{display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:10px;color:var(--muted)}
+/* LOADING */
+.loading{text-align:center;padding:40px;color:var(--muted);font-size:14px}
+.error{background:#fff0ed;color:#c00;border-radius:10px;padding:12px;font-size:13px;margin-bottom:12px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header>
+  <h1>🔥 Field Live Tracker — Dashboard</h1>
+  <a href="/tracker.html">← Submit Report</a>
+</header>
+
+<div class="wrap">
+
+  <!-- ERROR -->
+  <div id="errorMsg" class="error hidden"></div>
+
+  <!-- KPI CARDS -->
+  <div class="kpi-grid">
+    <div class="kpi"><b id="k_total">-</b><span>Total Submissions</span></div>
+    <div class="kpi"><b id="k_morning">-</b><span>Morning Reports</span></div>
+    <div class="kpi"><b id="k_midday">-</b><span>Midday Reports</span></div>
+    <div class="kpi"><b id="k_eod">-</b><span>EOD Reports</span></div>
+    <div class="kpi"><b id="k_agents">-</b><span>Active Agents</span></div>
+    <div class="kpi"><b id="k_tls">-</b><span>Active TLs</span></div>
+    <div class="kpi"><b id="k_rsms">-</b><span>Active RSMs</span></div>
+    <div class="kpi"><b id="k_clusters">-</b><span>Clusters Covered</span></div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters">
+    <h3>🔽 Filters</h3>
+    <div class="filter-grid">
+      <input type="date" id="f_date" placeholder="Date">
+      <select id="f_role">
+        <option value="">All Roles</option>
+        <option>Agent</option><option>TL</option><option>RSM</option>
+        <option>Trainer</option><option>Clerk</option>
+      </select>
+      <select id="f_session">
+        <option value="">All Sessions</option>
+        <option>Morning</option><option>Midday</option><option>EOD</option>
+      </select>
+      <select id="f_region" id="f_region">
+        <option value="">All Regions</option>
+      </select>
+      <select id="f_cluster">
+        <option value="">All Clusters</option>
+      </select>
+      <input type="text" id="f_name" placeholder="Search name...">
+    </div>
+    <button class="btn-apply" onclick="applyFilters()">Apply Filters</button>
+    <button class="btn-apply" style="background:#888;margin-left:8px" onclick="clearFilters()">Clear</button>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>Submissions by Role</h3>
+      <div class="chart-wrap"><canvas id="chartRole"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Submissions by Session</h3>
+      <div class="chart-wrap"><canvas id="chartSession"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Submissions by Region</h3>
+      <div class="chart-wrap"><canvas id="chartRegion"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Daily Submission Trend</h3>
+      <div class="chart-wrap"><canvas id="chartTrend"></canvas></div>
+    </div>
+    <div class="chart-card" style="grid-column:1/-1">
+      <h3>Top 10 Active People by Submissions</h3>
+      <div class="chart-wrap" style="height:260px"><canvas id="chartTop10"></canvas></div>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div class="map-card">
+    <h3>📍 Submission Locations</h3>
+    <div id="map">
+      <div class="map-placeholder">
+        <div style="font-size:32px">🗺️</div>
+        <div>Loading map...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-card">
+    <h3>📋 All Submissions (<span id="tableCount">0</span>)</h3>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Timestamp</th><th>Role</th><th>Name</th><th>Session</th>
+            <th>Region</th><th>Cluster</th><th>Ward</th><th>Location</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td colspan="8" class="loading">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+</div><!-- /app -->
+
+<script>
+// ── CONFIG ──
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/14TryzFqbw3r4hXth3FI8eOHBs2rGqhdlRI585UePZy4/gviz/tq?tqx=out:json&sheet=Submissions';
+
+let allData = [];
+let charts = {};
+
+// ── LOAD DATA ──
+async function loadData(){
+  try{
+    const resp = await fetch(SHEET_URL + '&v=' + Date.now());
+    const txt  = await resp.text();
+    // Google wraps response in google.visualization.Query.setResponse(...)
+    const json = JSON.parse(txt.replace(/^.*?\(/, '').replace(/\);?\s*$/, ''));
+    const rows = json.table.rows;
+    const cols = json.table.cols;
+
+    allData = rows.filter(r=>r.c&&r.c[0]).map(r => {
+      const get = (i) => r.c[i] ? (r.c[i].f || r.c[i].v || '') : '';
+      return {
+        timestamp: get(0),
+        role:      get(1),
+        name:      get(2),
+        session:   get(3),
+        country:   get(4),
+        region:    get(5),
+        cluster:   get(6),
+        lat:       r.c[7] ? r.c[7].v : null,
+        lng:       r.c[8] ? r.c[8].v : null,
+        accuracy:  get(9),
+        ward:      get(10),
+        address:   get(11),
+        data:      get(12),
+        notes:     get(13),
+        challenge: get(14),
+      };
+    });
+
+    populateFilters();
+    renderAll(allData);
+    loadMap(allData);
+
+  }catch(e){
+    document.getElementById('errorMsg').classList.remove('hidden');
+    document.getElementById('errorMsg').textContent = 'Could not load data. Make sure your Google Sheet is published publicly. Error: ' + e.message;
+    console.error(e);
+  }
+}
+
+// ── POPULATE FILTER DROPDOWNS ──
+function populateFilters(){
+  const regions  = [...new Set(allData.map(r=>r.region).filter(Boolean))].sort();
+  const clusters = [...new Set(allData.map(r=>r.cluster).filter(Boolean))].sort();
+  const regSel = document.getElementById('f_region');
+  const clSel  = document.getElementById('f_cluster');
+  regions.forEach(r  => { const o=document.createElement('option'); o.value=r; o.textContent=r; regSel.appendChild(o); });
+  clusters.forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; clSel.appendChild(o); });
+}
+
+// ── APPLY FILTERS ──
+function applyFilters(){
+  const date    = document.getElementById('f_date').value;
+  const role    = document.getElementById('f_role').value;
+  const session = document.getElementById('f_session').value;
+  const region  = document.getElementById('f_region').value;
+  const cluster = document.getElementById('f_cluster').value;
+  const name    = document.getElementById('f_name').value.toLowerCase();
+
+  const filtered = allData.filter(r => {
+    if(date    && !r.timestamp.includes(date)) return false;
+    if(role    && r.role !== role)             return false;
+    if(session && r.session !== session)       return false;
+    if(region  && r.region !== region)         return false;
+    if(cluster && r.cluster !== cluster)       return false;
+    if(name    && !r.name.toLowerCase().includes(name)) return false;
+    return true;
+  });
+
+  renderAll(filtered);
+  loadMap(filtered);
+}
+
+function clearFilters(){
+  ['f_date','f_role','f_session','f_region','f_cluster','f_name'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  renderAll(allData);
+  loadMap(allData);
+}
+
+// ── RENDER ALL ──
+function renderAll(data){
+  renderKPIs(data);
+  renderCharts(data);
+  renderTable(data);
+}
+
+// ── KPIs ──
+function renderKPIs(data){
+  const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+  set('k_total',   data.length);
+  set('k_morning', data.filter(r=>r.session==='Morning').length);
+  set('k_midday',  data.filter(r=>r.session==='Midday').length);
+  set('k_eod',     data.filter(r=>r.session==='EOD').length);
+  set('k_agents',  new Set(data.filter(r=>r.role==='Agent').map(r=>r.name)).size);
+  set('k_tls',     new Set(data.filter(r=>r.role==='TL').map(r=>r.name)).size);
+  set('k_rsms',    new Set(data.filter(r=>r.role==='RSM').map(r=>r.name)).size);
+  set('k_clusters',new Set(data.map(r=>r.cluster).filter(Boolean)).size);
+}
+
+// ── CHARTS ──
+const OR = '#F07020';
+const COLORS = ['#F07020','#F59050','#FBBF8A','#174ea6','#22a63a','#986300','#b42318','#7c3aed'];
+
+function makeChart(id, type, labels, datasets, opts={}){
+  if(charts[id]) charts[id].destroy();
+  const ctx = document.getElementById(id)?.getContext('2d');
+  if(!ctx) return;
+  charts[id] = new Chart(ctx, {
+    type,
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: type==='pie'||type==='doughnut' } },
+      scales: type==='bar'||type==='line' ? {
+        y: { beginAtZero:true, grid:{color:'#f0f0f0'}, ticks:{font:{size:10}} },
+        x: { grid:{display:false}, ticks:{font:{size:10}} }
+      } : {},
+      ...opts
+    }
+  });
+}
+
+function renderCharts(data){
+  // By Role
+  const roles = ['Agent','TL','RSM','Trainer','Clerk'];
+  makeChart('chartRole','doughnut', roles, [{
+    data: roles.map(r=>data.filter(x=>x.role===r).length),
+    backgroundColor: COLORS, borderWidth: 2, borderColor: '#fff'
+  }]);
+
+  // By Session
+  const sessions = ['Morning','Midday','EOD'];
+  makeChart('chartSession','bar', sessions, [{
+    data: sessions.map(s=>data.filter(x=>x.session===s).length),
+    backgroundColor: [COLORS[0],COLORS[1],COLORS[2]], borderRadius: 8
+  }]);
+
+  // By Region
+  const regionCounts = {};
+  data.forEach(r=>{ if(r.region) regionCounts[r.region]=(regionCounts[r.region]||0)+1; });
+  const sortedReg = Object.entries(regionCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  makeChart('chartRegion','bar', sortedReg.map(x=>x[0]), [{
+    data: sortedReg.map(x=>x[1]),
+    backgroundColor: OR, borderRadius: 8
+  }]);
+
+  // Daily Trend
+  const dayCounts = {};
+  data.forEach(r=>{
+    const d = r.timestamp ? r.timestamp.split(' ')[0] : 'Unknown';
+    dayCounts[d] = (dayCounts[d]||0)+1;
+  });
+  const sortedDays = Object.entries(dayCounts).sort((a,b)=>a[0].localeCompare(b[0])).slice(-14);
+  makeChart('chartTrend','line', sortedDays.map(x=>x[0]), [{
+    data: sortedDays.map(x=>x[1]),
+    borderColor: OR, backgroundColor: 'rgba(240,112,32,.1)',
+    fill: true, tension: 0.4, pointBackgroundColor: OR
+  }]);
+
+  // Top 10 by submissions
+  const nameCounts = {};
+  data.forEach(r=>{ if(r.name) nameCounts[r.name]=(nameCounts[r.name]||0)+1; });
+  const top10 = Object.entries(nameCounts).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  makeChart('chartTop10','bar', top10.map(x=>x[0]), [{
+    data: top10.map(x=>x[1]),
+    backgroundColor: top10.map((_,i)=>COLORS[i%COLORS.length]), borderRadius: 8
+  }], {indexAxis:'y'});
+}
+
+// ── TABLE ──
+function renderTable(data){
+  document.getElementById('tableCount').textContent = data.length;
+  const tbody = document.getElementById('tableBody');
+  if(!data.length){
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#888;padding:20px">No data for selected filters</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.slice().reverse().slice(0,100).map(r => `
+    <tr>
+      <td style="white-space:nowrap;font-size:11px">${r.timestamp||'-'}</td>
+      <td><span class="badge">${r.role||'-'}</span></td>
+      <td style="font-weight:700">${r.name||'-'}</td>
+      <td>${r.session||'-'}</td>
+      <td>${r.region||'-'}</td>
+      <td>${r.cluster||'-'}</td>
+      <td style="font-size:11px">${r.ward||'-'}</td>
+      <td style="font-size:11px">${r.lat&&r.lng?r.lat+','+r.lng:'-'}</td>
+    </tr>`).join('');
+}
+
+// ── MAP ──
+function loadMap(data){
+  const mapEl = document.getElementById('map');
+  const pts = data.filter(r=>r.lat&&r.lng&&!isNaN(r.lat)&&!isNaN(r.lng));
+  if(!pts.length){
+    mapEl.innerHTML = '<div class="map-placeholder"><div style="font-size:32px">🗺️</div><div>No GPS data available</div></div>';
+    return;
+  }
+  // Use OpenStreetMap with Leaflet
+  if(typeof L === 'undefined'){
+    // Load Leaflet
+    const link = document.createElement('link');
+    link.rel='stylesheet'; link.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+    document.head.appendChild(link);
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+    script.onload = () => renderMap(pts, mapEl);
+    document.head.appendChild(script);
+  } else {
+    renderMap(pts, mapEl);
+  }
+}
+
+function renderMap(pts, mapEl){
+  mapEl.innerHTML = '';
+  const avgLat = pts.reduce((s,p)=>s+parseFloat(p.lat),0)/pts.length;
+  const avgLng = pts.reduce((s,p)=>s+parseFloat(p.lng),0)/pts.length;
+  const map = L.map(mapEl).setView([avgLat,avgLng],10);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© OpenStreetMap'
+  }).addTo(map);
+  const roleColors = {Agent:'#F07020',TL:'#174ea6',RSM:'#22a63a',Trainer:'#7c3aed',Clerk:'#986300'};
+  pts.forEach(p => {
+    const color = roleColors[p.role]||'#888';
+    const marker = L.circleMarker([parseFloat(p.lat),parseFloat(p.lng)],{
+      radius:7, fillColor:color, color:'#fff',
+      weight:2, fillOpacity:0.85
+    }).addTo(map);
+    marker.bindPopup(`<b>${p.name}</b><br>${p.role} · ${p.session}<br>${p.ward||''}<br>${p.timestamp||''}`);
+  });
+}
+
+// ── START ──
+loadData();
+setInterval(loadData, 60000); // Auto-refresh every 60 seconds
+</script>
+</body>
+</html>
