@@ -1827,7 +1827,15 @@ const DEFAULT_QUESTIONS = {
   ],
 };
 function getQuestions(section){
-  // Check synced questions first (from Google Sheets via admin)
+  // Check locally edited questions first (most recent changes)
+  const stored = localStorage.getItem(QM_KEY);
+  if(stored){
+    try{
+      const all = JSON.parse(stored);
+      if(all[section]) return JSON.parse(JSON.stringify(all[section]));
+    }catch(e){}
+  }
+  // Fall back to synced questions from Google Sheets
   const synced = localStorage.getItem('fla_synced_questions');
   if(synced){
     try{
@@ -1835,19 +1843,19 @@ function getQuestions(section){
       if(sq[section]) return JSON.parse(JSON.stringify(sq[section]));
     }catch(e){}
   }
-  // Fall back to locally edited or default
-  const stored = localStorage.getItem(QM_KEY);
-  const all = stored ? JSON.parse(stored) : {};
-  return all[section] || JSON.parse(JSON.stringify(DEFAULT_QUESTIONS[section] || []));
+  // Fall back to built-in defaults
+  return JSON.parse(JSON.stringify(DEFAULT_QUESTIONS[section] || []));
 }
 
 function saveQuestionsForSection(section, qs){
   const stored = localStorage.getItem(QM_KEY);
   const all = stored ? JSON.parse(stored) : {};
+  // Also copy all other sections from defaults if not already saved
+  Object.keys(DEFAULT_QUESTIONS).forEach(s => {
+    if(!all[s]) all[s] = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS[s]));
+  });
   all[section] = qs;
   localStorage.setItem(QM_KEY, JSON.stringify(all));
-  // Also push all questions to Google Sheets so other devices sync
-  pushQuestionsToSheets(all);
 }
 
 function getAllQuestions(){
