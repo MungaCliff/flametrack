@@ -221,8 +221,10 @@ async function loadData(){
     renderAll(allData);
     loadMap(allData);
   }catch(e){
-    errEl.classList.remove('hidden');
-    errEl.textContent = 'Could not load data: ' + e.message;
+    if(!e.message.includes('Map container')){
+      errEl.classList.remove('hidden');
+      if(!e.message.includes('Map') && !e.message.includes('map')) errEl.textContent = 'Could not load data: ' + e.message;
+    }
     console.error(e);
   }
 }
@@ -382,45 +384,62 @@ function renderTable(data){
 }
 
 // ── MAP ──
+let leafletMap = null;
+let leafletLoaded = false;
+let pendingMapData = null;
+
 function loadMap(data){
-  const mapEl = document.getElementById('map');
   const pts = data.filter(r=>r.lat&&r.lng&&!isNaN(r.lat)&&!isNaN(r.lng));
+  pendingMapData = pts;
   if(!pts.length){
-    mapEl.innerHTML = '<div class="map-placeholder"><div style="font-size:32px">🗺️</div><div>No GPS data available</div></div>';
+    const mapEl = document.getElementById('map');
+    if(mapEl) mapEl.innerHTML = '<div class="map-placeholder"><div style="font-size:32px">🗺️</div><div>No GPS data for this filter</div></div>';
     return;
   }
-  // Use OpenStreetMap with Leaflet
-  if(typeof L === 'undefined'){
-    // Load Leaflet
+  if(leafletLoaded){ renderMap(pts); return; }
+  // Load Leaflet CSS + JS once
+  if(!document.getElementById('leaflet-css')){
     const link = document.createElement('link');
-    link.rel='stylesheet'; link.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+    link.id='leaflet-css'; link.rel='stylesheet';
+    link.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
     document.head.appendChild(link);
+  }
+  if(!document.getElementById('leaflet-js')){
     const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
-    script.onload = () => renderMap(pts, mapEl);
+    script.id='leaflet-js';
+    script.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+    script.onload = () => { leafletLoaded=true; renderMap(pendingMapData); };
     document.head.appendChild(script);
-  } else {
-    renderMap(pts, mapEl);
   }
 }
 
-function renderMap(pts, mapEl){
-  mapEl.innerHTML = '';
+function renderMap(pts){
+  // Always use a fresh div to avoid re-init errors
+  const wrap = document.getElementById('map');
+  if(!wrap) return;
+  // Destroy old map instance
+  if(leafletMap){ try{ leafletMap.remove(); }catch(e){} leafletMap=null; }
+  // Replace div with fresh one
+  const newDiv = document.createElement('div');
+  newDiv.id='map'; newDiv.style.cssText='height:350px;border-radius:10px';
+  wrap.parentNode.replaceChild(newDiv, wrap);
+  // Create new map
   const avgLat = pts.reduce((s,p)=>s+parseFloat(p.lat),0)/pts.length;
   const avgLng = pts.reduce((s,p)=>s+parseFloat(p.lng),0)/pts.length;
-  const map = L.map(mapEl).setView([avgLat,avgLng],10);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    attribution:'© OpenStreetMap'
-  }).addTo(map);
-  const roleColors = {Agent:'#F07020',TL:'#174ea6',RSM:'#22a63a',Trainer:'#7c3aed',Clerk:'#986300'};
-  pts.forEach(p => {
-    const color = roleColors[p.role]||'#888';
-    const marker = L.circleMarker([parseFloat(p.lat),parseFloat(p.lng)],{
-      radius:7, fillColor:color, color:'#fff',
-      weight:2, fillOpacity:0.85
-    }).addTo(map);
-    marker.bindPopup(`<b>${p.name}</b><br>${p.role} · ${p.session}<br>${p.ward||''}<br>${p.timestamp||''}`);
-  });
+  try{
+    leafletMap = L.map('map').setView([avgLat,avgLng],9);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      attribution:'© OpenStreetMap'
+    }).addTo(leafletMap);
+    const roleColors={Agent:'#F07020',TL:'#174ea6',RSM:'#22a63a',Trainer:'#7c3aed',Clerk:'#986300'};
+    pts.forEach(p=>{
+      const color=roleColors[p.role]||'#888';
+      L.circleMarker([parseFloat(p.lat),parseFloat(p.lng)],{
+        radius:8, fillColor:color, color:'#fff', weight:2, fillOpacity:0.9
+      }).addTo(leafletMap)
+       .bindPopup(`<b>${p.name}</b><br><span style="color:${color}">${p.role}</span> · ${p.session}<br>${p.ward||''}<br><small>${p.timestamp||''}</small>`);
+    });
+  }catch(e){ console.log('Map error:',e.message); }
 }
 
 // ── START ──
