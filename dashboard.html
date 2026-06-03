@@ -16,12 +16,10 @@ body{font-family:Arial,sans-serif;background:var(--bg);color:var(--ink);font-siz
 .hdr-btn{background:rgba(255,255,255,.2);border:0;color:#fff;padding:5px 12px;border-radius:20px;font-size:12px;cursor:pointer;font-family:Arial}
 .last-upd{font-size:11px;color:rgba(255,255,255,.7)}
 .page{max-width:1400px;margin:auto;padding:16px}
-/* NAV TABS */
 .dash-nav{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px;background:#fff;border-radius:12px;padding:8px;border:1px solid var(--border)}
 .dn{border:0;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;background:none;color:var(--muted);cursor:pointer;font-family:Arial;white-space:nowrap}
 .dn.active{background:var(--or);color:#fff}
 .dash-section{display:none}.dash-section.active{display:block}
-/* FILTERS */
 .filter-bar{background:#fff;border-radius:12px;padding:14px;margin-bottom:16px;border:1px solid var(--border)}
 .filter-bar h3{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
 .quick-btns{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
@@ -34,7 +32,6 @@ body{font-family:Arial,sans-serif;background:var(--bg);color:var(--ink);font-siz
 .fg select:focus,.fg input:focus{border-color:var(--or)}
 .apply-btn{background:var(--or);color:#fff;border:0;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial}
 .clear-btn{background:#eee;color:#555;border:0;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial}
-/* KPIs */
 .sec-title{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
 .kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px}
 @media(min-width:500px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
@@ -47,7 +44,6 @@ body{font-family:Arial,sans-serif;background:var(--bg);color:var(--ink);font-siz
 .kpi.b{border-left-color:var(--blue)}.kpi.b b{color:var(--blue)}
 .kpi.r{border-left-color:var(--red)}.kpi.r b{color:var(--red)}
 .kpi.p{border-left-color:var(--purple)}.kpi.p b{color:var(--purple)}
-/* CHARTS GRID */
 .cg{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:16px}
 @media(min-width:700px){.cg{grid-template-columns:1fr 1fr}}
 .cc{background:#fff;border-radius:12px;padding:14px;border:1px solid var(--border)}
@@ -59,7 +55,6 @@ body{font-family:Arial,sans-serif;background:var(--bg);color:var(--ink);font-siz
 .cw{position:relative;height:200px}
 .cw.tall{height:280px}
 .cw.short{height:150px}
-/* SUMMARY CARDS */
 .sg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px}
 @media(min-width:600px){.sg{grid-template-columns:repeat(3,1fr)}}
 @media(min-width:900px){.sg{grid-column:repeat(4,1fr)}}
@@ -68,7 +63,6 @@ body{font-family:Arial,sans-serif;background:var(--bg);color:var(--ink);font-siz
 .sr{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f5f5f5;font-size:12px}
 .sr:last-child{border-bottom:0}
 .spb{height:5px;border-radius:3px;margin-top:2px;background:linear-gradient(90deg,var(--or),var(--or-dk));opacity:.7}
-/* FIELD INTELLIGENCE FEED */
 .feed-wrap{background:#fff;border-radius:12px;padding:14px;border:1px solid var(--border);margin-bottom:16px}
 .feed-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .feed-header h3{font-size:13px;font-weight:800;color:var(--ink)}
@@ -84,13 +78,11 @@ body{font-family:Arial,sans-serif;background:var(--bg);color:var(--ink);font-siz
 .feed-item-text.collapsed{max-height:2.8em;overflow:hidden}
 .feed-expand{background:none;border:0;color:var(--or);font-size:11px;font-weight:700;cursor:pointer;margin-top:4px;padding:0;font-family:Arial}
 .feed-empty{text-align:center;padding:30px;color:var(--muted);font-size:13px}
-/* HEATMAP */
 .hm-wrap{overflow-x:auto}
 .hm{border-collapse:collapse;width:100%;font-size:12px}
 .hm th{padding:6px 10px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;border-bottom:2px solid var(--border)}
 .hm td{padding:6px 10px;text-align:center;border:1px solid var(--border);font-weight:700;min-width:60px}
 .hm0{background:#f9f9f9;color:#ddd}.hm1{background:#fef0e6;color:#c85010}.hm2{background:#fdd9ba;color:#a04010}.hm3{background:#f07020;color:#fff}.hm4{background:#c85010;color:#fff}
-/* TABLE */
 .tw{background:#fff;border-radius:12px;padding:14px;border:1px solid var(--border);margin-bottom:16px;overflow-x:auto}
 .tw-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
 table{width:100%;border-collapse:collapse;min-width:700px;font-size:12px}
@@ -100,18 +92,13 @@ tr:hover td{background:#fffaf5}
 .badge{display:inline-block;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:800}
 .ba{background:#fff0e6;color:#c85010}.bt{background:#e6eeff;color:#174ea6}.br{background:#e6ffed;color:#1a7a30}.btr{background:#f0e6ff;color:#7c3aed}.bc{background:#fff9e6;color:#986300}
 .bm{background:#fff8e6;color:#986300}.bmd{background:#ffe6e6;color:#c0392b}.be{background:#e6f0ff;color:#174ea6}
-/* EXPORT BTN */
 .exp-btn{background:var(--green);color:#fff;border:0;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial}
-/* MAP */
 .map-wrap{background:#fff;border-radius:12px;padding:14px;border:1px solid var(--border);margin-bottom:16px}
 #map{height:400px;border-radius:10px;background:#e8e8e8}
-/* ERR */
 .err{background:#fff0ed;color:#c00;border-radius:10px;padding:12px;font-size:13px;margin-bottom:12px;display:none}
-/* FUNNEL */
 .funnel{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0}
 .funnel-step{background:linear-gradient(135deg,var(--or),var(--or-dk));color:#fff;font-weight:700;font-size:12px;border-radius:6px;padding:8px;text-align:center;display:flex;justify-content:space-between;align-items:center;transition:width .5s}
 .funnel-arrow{color:var(--muted);font-size:16px;text-align:center}
-/* PROGRESS */
 .prog-bar{background:#f0f0f0;border-radius:999px;height:10px;margin-top:4px;overflow:hidden}
 .prog-fill{height:10px;border-radius:999px;background:linear-gradient(90deg,var(--or),var(--or-dk))}
 .prog-fill.green{background:linear-gradient(90deg,var(--green),#1a5a25)}
@@ -132,10 +119,9 @@ tr:hover td{background:#fffaf5}
 <div class="page">
 <div class="err" id="errMsg"></div>
 
-<!-- NAV TABS -->
 <div class="dash-nav">
   <button class="dn active" onclick="showSection('overview',this)">📊 Overview</button>
-  <button class="dn" onclick="showSection('sales',this)">💰 Sales & Leads</button>
+  <button class="dn" onclick="showSection('sales',this)">💰 Sales &amp; Leads</button>
   <button class="dn" onclick="showSection('coverage',this)">🌍 Coverage</button>
   <button class="dn" onclick="showSection('coaching',this)">📚 Coaching</button>
   <button class="dn" onclick="showSection('training',this)">🎓 Training</button>
@@ -144,7 +130,6 @@ tr:hover td{background:#fffaf5}
   <button class="dn" onclick="showSection('records',this)">📋 Records</button>
 </div>
 
-<!-- GLOBAL FILTERS -->
 <div class="filter-bar">
   <h3>🔽 Global Filters — affect all metrics, charts and tables</h3>
   <div class="quick-btns">
@@ -159,8 +144,8 @@ tr:hover td{background:#fffaf5}
   <div class="filter-row">
     <div class="fg" id="fg1" style="display:none"><label>From</label><input type="date" id="f_from"></div>
     <div class="fg" id="fg2" style="display:none"><label>To</label><input type="date" id="f_to"></div>
-    <div class="fg"><label>Country</label><select id="f_country"><option value="">All Countries</option></select></div>
-    <div class="fg"><label>Region</label><select id="f_region"><option value="">All Regions</option></select></div>
+    <div class="fg"><label>Country</label><select id="f_country" onchange="cascadeRegions()"><option value="">All Countries</option></select></div>
+    <div class="fg"><label>Region</label><select id="f_region" onchange="cascadeClusters()"><option value="">All Regions</option></select></div>
     <div class="fg"><label>Cluster</label><select id="f_cluster"><option value="">All Clusters</option></select></div>
     <div class="fg"><label>Role</label>
       <select id="f_role"><option value="">All Roles</option><option>Agent</option><option>TL</option><option>RSM</option><option>Trainer</option><option>Clerk</option></select>
@@ -178,9 +163,8 @@ tr:hover td{background:#fffaf5}
   </div>
 </div>
 
-<!-- ═══════════════════════════════════ OVERVIEW ═══════════════════════════════════ -->
+<!-- OVERVIEW -->
 <div id="sec_overview" class="dash-section active">
-
   <div class="sec-title">📊 Activity Summary</div>
   <div class="kpi-grid">
     <div class="kpi"><b id="k_total">-</b><span>Total Submissions</span></div>
@@ -196,7 +180,6 @@ tr:hover td{background:#fffaf5}
     <div class="kpi"><b id="k_eod">-</b><span>EOD Reports</span></div>
     <div class="kpi g"><b id="k_clusters">-</b><span>Clusters Covered</span></div>
   </div>
-
   <div class="cg">
     <div class="cc full"><div class="cc-title">📈 Daily Trend
       <div class="tbs"><button class="tb active" onclick="setTrend('day',this)">Day</button><button class="tb" onclick="setTrend('week',this)">Week</button><button class="tb" onclick="setTrend('month',this)">Month</button></div>
@@ -208,15 +191,13 @@ tr:hover td{background:#fffaf5}
     </div><div class="cw tall"><canvas id="chartTop"></canvas></div></div>
     <div class="cc full"><div class="cc-title">🔥 Activity Heatmap — Region × Session</div><div class="hm-wrap" id="heatmap"></div></div>
   </div>
-
-  <!-- Response summaries -->
   <div class="sec-title">📋 Response Summaries</div>
   <div class="sg" id="sumCards"></div>
 </div>
 
-<!-- ═══════════════════════════════════ SALES & LEADS ═══════════════════════════════════ -->
+<!-- SALES -->
 <div id="sec_sales" class="dash-section">
-  <div class="sec-title">💰 Sales & Leads Performance</div>
+  <div class="sec-title">💰 Sales &amp; Leads Performance</div>
   <div class="kpi-grid">
     <div class="kpi g"><b id="s_leads">-</b><span>Total Leads</span></div>
     <div class="kpi g"><b id="s_sales">-</b><span>Total Sales</span></div>
@@ -227,8 +208,6 @@ tr:hover td{background:#fffaf5}
     <div class="kpi"><b id="s_route_change">-</b><span>Route Changes</span></div>
     <div class="kpi g"><b id="s_conversion">-</b><span>Conversion Rate</span></div>
   </div>
-
-  <!-- Sales Funnel -->
   <div class="cg">
     <div class="cc"><div class="cc-title">🎯 Activity Funnel</div><div id="funnelChart"></div></div>
     <div class="cc"><div class="cc-title">📈 Leads Generated Over Time</div><div class="cw"><canvas id="chartLeads"></canvas></div></div>
@@ -237,9 +216,9 @@ tr:hover td{background:#fffaf5}
   </div>
 </div>
 
-<!-- ═══════════════════════════════════ COVERAGE ═══════════════════════════════════ -->
+<!-- COVERAGE -->
 <div id="sec_coverage" class="dash-section">
-  <div class="sec-title">🌍 Coverage & Compliance</div>
+  <div class="sec-title">🌍 Coverage &amp; Compliance</div>
   <div class="kpi-grid">
     <div class="kpi g"><b id="cov_countries">-</b><span>Countries</span></div>
     <div class="kpi g"><b id="cov_regions">-</b><span>Regions</span></div>
@@ -252,13 +231,12 @@ tr:hover td{background:#fffaf5}
     <div class="cc"><div class="cc-title">🌍 Submissions by Region</div><div class="cw"><canvas id="chartGeo"></canvas></div></div>
     <div class="cc"><div class="cc-title">✅ Compliance by Region</div><div class="cw"><canvas id="chartComp"></canvas></div></div>
     <div class="cc full"><div class="cc-title">🔥 Coverage Heatmap</div><div class="hm-wrap" id="heatmap2"></div></div>
-    <!-- TL Activity -->
     <div class="cc"><div class="cc-title">👥 TL Accompaniment Today</div><div id="tlAccList"></div></div>
     <div class="cc"><div class="cc-title">📍 Main Focus Today</div><div class="cw short"><canvas id="chartFocus"></canvas></div></div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════ COACHING ═══════════════════════════════════ -->
+<!-- COACHING -->
 <div id="sec_coaching" class="dash-section">
   <div class="sec-title">📚 Coaching Activity</div>
   <div class="kpi-grid">
@@ -274,7 +252,7 @@ tr:hover td{background:#fffaf5}
   </div>
 </div>
 
-<!-- ═══════════════════════════════════ TRAINING ═══════════════════════════════════ -->
+<!-- TRAINING -->
 <div id="sec_training" class="dash-section">
   <div class="sec-title">🎓 Training Summary</div>
   <div class="kpi-grid">
@@ -293,7 +271,7 @@ tr:hover td{background:#fffaf5}
   </div>
 </div>
 
-<!-- ═══════════════════════════════════ DEMOS ═══════════════════════════════════ -->
+<!-- DEMOS -->
 <div id="sec_demos" class="dash-section">
   <div class="sec-title">🎯 Demo Activity</div>
   <div class="kpi-grid">
@@ -311,7 +289,7 @@ tr:hover td{background:#fffaf5}
   </div>
 </div>
 
-<!-- ═══════════════════════════════════ FIELD INTELLIGENCE ═══════════════════════════════════ -->
+<!-- FIELD INTELLIGENCE -->
 <div id="sec_intelligence" class="dash-section">
   <div class="feed-wrap">
     <div class="feed-header">
@@ -331,12 +309,10 @@ tr:hover td{background:#fffaf5}
     </div>
     <div id="feedList"></div>
   </div>
-
-  <!-- Response summaries for intelligence -->
   <div class="sg" id="intelCards"></div>
 </div>
 
-<!-- ═══════════════════════════════════ RECORDS ═══════════════════════════════════ -->
+<!-- RECORDS -->
 <div id="sec_records" class="dash-section">
   <div class="tw">
     <div class="tw-header">
@@ -353,13 +329,12 @@ tr:hover td{background:#fffaf5}
   </div>
 </div>
 
-<!-- MAP (shown on all sections) -->
 <div class="map-wrap">
   <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:10px">📍 Submission Locations</div>
   <div id="map"></div>
 </div>
 
-</div><!-- /page -->
+</div>
 
 <script>
 const SHEET_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vRNHXmIzq53E5yMoUCeN6n-MVXykcefh6IpUIHzPjnljMV78vHW0ZlGs3OrTDaVxNBtA83IPqhevSj-/pub?gid=1107018990&single=true&output=csv';
@@ -367,10 +342,10 @@ let allData=[],filteredData=[],charts={};
 let leafletMap=null,leafletLoaded=false;
 let trendBy='day',topBy='all',activeDateMode='all';
 
-// ── PARSE CSV ──
 function parseCSV(txt){
-  const lines=txt.trim().split('\n');
-  if(lines.length<2) return [];
+  const lines=txt.trim().split('
+');
+  if(lines.length<2)return[];
   return lines.slice(1).map(line=>{
     const cols=[],len=line.length;let val='',inQ=false;
     for(let i=0;i<len;i++){const ch=line[i];if(ch==='"')inQ=!inQ;else if(ch===','&&!inQ){cols.push(val.trim());val='';}else val+=ch;}
@@ -387,11 +362,9 @@ function parseCSV(txt){
   }).filter(r=>r.role&&r.name);
 }
 
-// helper to get field from parsed data
 function pget(r,field){return r.data?.[field]||'';}
 function pnum(r,field){return parseFloat(r.data?.[field])||0;}
 
-// ── LOAD ──
 async function loadData(){
   try{
     const resp=await fetch(SHEET_CSV+'&v='+Date.now(),{cache:'no-store'});
@@ -406,20 +379,45 @@ async function loadData(){
   }
 }
 
-// ── POPULATE FILTERS ──
-function populateFilters(){
-  const fill=(id,items)=>{
-    const s=document.getElementById(id);if(!s)return;
-    while(s.options.length>1)s.remove(1);
-    items.forEach(v=>{const o=document.createElement('option');o.value=o.textContent=v;s.appendChild(o);});
-  };
-  fill('f_country',[...new Set(allData.map(r=>r.country).filter(Boolean))].sort());
-  fill('f_region',[...new Set(allData.map(r=>r.region).filter(Boolean))].sort());
-  fill('f_cluster',[...new Set(allData.map(r=>r.cluster).filter(Boolean))].sort());
-  fill('feed_region',[...new Set(allData.map(r=>r.region).filter(Boolean))].sort());
+// ── POPULATE FILTERS — cascading: Country → Region → Cluster ──
+function fillSelect(id,items){
+  const s=document.getElementById(id);if(!s)return;
+  const prev=s.value;
+  while(s.options.length>1)s.remove(1);
+  items.forEach(v=>{const o=document.createElement('option');o.value=o.textContent=v;s.appendChild(o);});
+  if(prev&&items.includes(prev))s.value=prev;
 }
 
-// ── DATE FILTER ──
+function populateFilters(){
+  // Country always shows all countries from full dataset
+  fillSelect('f_country',[...new Set(allData.map(r=>r.country).filter(Boolean))].sort());
+  // Cascade region and cluster from whatever country is selected (none = all)
+  cascadeRegions();
+  // Feed region filter shows all regions
+  fillSelect('feed_region',[...new Set(allData.map(r=>r.region).filter(Boolean))].sort());
+}
+
+function cascadeRegions(){
+  const country=document.getElementById('f_country')?.value||'';
+  const rows=country?allData.filter(r=>r.country===country):allData;
+  const regions=[...new Set(rows.map(r=>r.region).filter(Boolean))].sort();
+  fillSelect('f_region',regions);
+  // Clear cluster when country changes and re-cascade
+  const clusterEl=document.getElementById('f_cluster');
+  if(clusterEl)clusterEl.value='';
+  cascadeClusters();
+}
+
+function cascadeClusters(){
+  const country=document.getElementById('f_country')?.value||'';
+  const region=document.getElementById('f_region')?.value||'';
+  let rows=allData;
+  if(country)rows=rows.filter(r=>r.country===country);
+  if(region)rows=rows.filter(r=>r.region===region);
+  const clusters=[...new Set(rows.map(r=>r.cluster).filter(Boolean))].sort();
+  fillSelect('f_cluster',clusters);
+}
+
 function qDate(mode,btn){
   activeDateMode=mode;
   document.querySelectorAll('.qb').forEach(b=>b.classList.remove('active'));
@@ -427,7 +425,7 @@ function qDate(mode,btn){
   const show=mode==='custom';
   document.getElementById('fg1').style.display=show?'flex':'none';
   document.getElementById('fg2').style.display=show?'flex':'none';
-  if(mode!=='custom') applyFilters();
+  if(mode!=='custom')applyFilters();
 }
 function matchDate(r){
   if(!r.timestamp)return true;
@@ -447,7 +445,6 @@ function matchDate(r){
   return true;
 }
 
-// ── APPLY FILTERS ──
 function applyFilters(){
   const country=document.getElementById('f_country').value;
   const region=document.getElementById('f_region').value;
@@ -467,16 +464,18 @@ function applyFilters(){
   });
   renderAll();
 }
+
 function clearFilters(){
   activeDateMode='all';
   document.querySelectorAll('.qb').forEach((b,i)=>b.classList.toggle('active',i===0));
-  ['f_country','f_region','f_cluster','f_role','f_session','f_name'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  // Clear country/role/session/name — then cascade will reset region+cluster
+  ['f_country','f_role','f_session','f_name'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('fg1').style.display='none';
   document.getElementById('fg2').style.display='none';
+  cascadeRegions(); // re-populate region+cluster with full lists
   applyFilters();
 }
 
-// ── NAV ──
 function showSection(id,btn){
   document.querySelectorAll('.dash-section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.dn').forEach(b=>b.classList.remove('active'));
@@ -484,30 +483,18 @@ function showSection(id,btn){
   btn.classList.add('active');
 }
 
-// ── RENDER ALL ──
 function renderAll(){
   const d=filteredData;
-  renderKPIs(d);
-  renderOverviewCharts(d);
-  renderHeatmap('heatmap',d);
-  renderSumCards(d);
-  renderSalesSection(d);
-  renderCoverageSection(d);
-  renderCoachingSection(d);
-  renderTrainingSection(d);
-  renderDemoSection(d);
-  renderFeed();
-  renderIntelCards(d);
-  renderTable(d);
-  loadMap(d);
+  renderKPIs(d);renderOverviewCharts(d);renderHeatmap('heatmap',d);renderSumCards(d);
+  renderSalesSection(d);renderCoverageSection(d);renderCoachingSection(d);
+  renderTrainingSection(d);renderDemoSection(d);renderFeed();renderIntelCards(d);
+  renderTable(d);loadMap(d);
 }
 
-// ── CHART HELPER ──
 const OR='#F07020',COLS=['#F07020','#174ea6','#22a63a','#7c3aed','#986300','#c0392b','#F59050','#0ea5e9'];
 function mkChart(id,type,labels,datasets,extra={}){
   if(charts[id])charts[id].destroy();
-  const ctx=document.getElementById(id)?.getContext('2d');
-  if(!ctx)return;
+  const ctx=document.getElementById(id)?.getContext('2d');if(!ctx)return;
   charts[id]=new Chart(ctx,{type,data:{labels,datasets},options:{
     responsive:true,maintainAspectRatio:false,
     plugins:{legend:{display:type==='doughnut'||type==='pie',position:'bottom',labels:{font:{size:10},padding:6}}},
@@ -516,7 +503,6 @@ function mkChart(id,type,labels,datasets,extra={}){
   }});
 }
 
-// ── KPIs ──
 function renderKPIs(d){
   const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   const agents=[...new Set(d.filter(r=>r.role==='Agent').map(r=>r.name))];
@@ -534,21 +520,16 @@ function renderKPIs(d){
   s('k_clusters',new Set(d.map(r=>r.cluster).filter(Boolean)).size);
 }
 
-// ── OVERVIEW CHARTS ──
 function renderOverviewCharts(d){
-  // Trend
   renderTrend(d);
-  // Role
   const roles=['Agent','TL','RSM','Trainer','Clerk'];
   const rc=roles.map(r=>d.filter(x=>x.role===r).length);
   mkChart('chartRole','doughnut',roles,[{data:rc,backgroundColor:COLS,borderWidth:2,borderColor:'#fff'}]);
-  // Session
   const sess=['Morning','Midday','EOD'];
   const sc=sess.map(s=>d.filter(r=>r.session===s).length);
   const tot=sc.reduce((a,b)=>a+b,0)||1;
   mkChart('chartSess','bar',sess.map((s,i)=>`${s} (${Math.round(sc[i]/tot*100)}%)`),
     [{data:sc,backgroundColor:['#f59050','#F07020','#c85010'],borderRadius:8}]);
-  // Top
   renderTop(d);
 }
 function renderTrend(d){
@@ -573,7 +554,6 @@ function renderTop(d){
 }
 function setTop(m,btn){topBy=m;btn.closest('.cc').querySelectorAll('.tb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderTop(filteredData);}
 
-// ── HEATMAP ──
 function renderHeatmap(id,d){
   const regions=[...new Set(d.map(r=>r.region).filter(Boolean))].slice(0,8);
   const sessions=['Morning','Midday','EOD'];
@@ -595,22 +575,16 @@ function renderHeatmap(id,d){
   const el=document.getElementById(id);if(el)el.innerHTML=html;
 }
 
-// ── SUMMARY CARDS ──
 function renderSumCards(d){
   const grid=document.getElementById('sumCards');if(!grid)return;
   const cards=[];
-  // Challenges
   cards.push(buildCountCard('⚠️ Key Challenges','challenge',d));
-  // Performance risks
   const risks={};d.forEach(r=>{const v=pget(r,'am4')||pget(r,'ckm4');if(v)risks[v]=(risks[v]||0)+1;});
   if(Object.keys(risks).length)cards.push(buildObjCard('🚨 Performance Risks',risks,d.length));
-  // Support needed
   const support={};d.forEach(r=>{const v=pget(r,'am6')||pget(r,'ckm5');if(v&&v.length>2)support[v.substring(0,30)]=(support[v.substring(0,30)]||0)+1;});
   if(Object.keys(support).length)cards.push(buildObjCard('🛠 Support Requested',support,d.length));
-  // Blockers
   const blockers={};d.forEach(r=>{const v=pget(r,'md2')||pget(r,'tlmd2')||pget(r,'rsmmd2');if(v&&v!=='No blocker')blockers[v]=(blockers[v]||0)+1;});
   if(Object.keys(blockers).length)cards.push(buildObjCard('🚧 Blockers',blockers,d.length));
-  // Route changes
   const rc=d.filter(r=>pget(r,'md4')==='Yes'||pget(r,'ckmd4')==='Yes').length;
   if(d.length)cards.push(`<div class="sc"><div class="sc-title">🔄 Route Changes</div>
     <div style="font-size:28px;font-weight:900;color:var(--or);margin:8px 0">${rc}</div>
@@ -623,7 +597,7 @@ function buildCountCard(title,field,d){
   const counts={};
   d.forEach(r=>{const v=r[field];if(v&&v!=='None')counts[v]=(counts[v]||0)+1;});
   const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  if(!entries.length)return '';
+  if(!entries.length)return'';
   let html=`<div class="sc"><div class="sc-title">${title}</div>`;
   entries.forEach(([k,v])=>{
     const pct=Math.round(v/d.length*100);
@@ -634,7 +608,7 @@ function buildCountCard(title,field,d){
 }
 function buildObjCard(title,counts,total){
   const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  if(!entries.length)return '';
+  if(!entries.length)return'';
   let html=`<div class="sc"><div class="sc-title">${title}</div>`;
   entries.forEach(([k,v])=>{
     const pct=Math.round(v/total*100);
@@ -644,7 +618,6 @@ function buildObjCard(title,counts,total){
   return html+'</div>';
 }
 
-// ── SALES SECTION ──
 function renderSalesSection(d){
   const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   let leads=0,sales=0,cookware=0,demoPlan=0,demoDone=0,install=0,routeChange=0;
@@ -660,42 +633,28 @@ function renderSalesSection(d){
   const conv=demoPlan>0?Math.round(sales/demoPlan*100):0;
   s('s_leads',leads);s('s_sales',sales);s('s_cookware',cookware);
   s('s_demos_plan',demoPlan);s('s_demos_done',demoDone);
-  s('s_install',install);s('s_route_change',routeChange);
-  s('s_conversion',conv+'%');
-
-  // Funnel
+  s('s_install',install);s('s_route_change',routeChange);s('s_conversion',conv+'%');
   const steps=[['Demos Planned',demoPlan],['Demos Done',demoDone],['Sales',sales],['1st Installment',install]];
   const maxV=Math.max(...steps.map(x=>x[1]),1);
   const funnel=document.getElementById('funnelChart');
   if(funnel){
     funnel.innerHTML='<div class="funnel">'+steps.map(([label,val],i)=>{
       const w=Math.round(val/maxV*100);const pct=i>0?Math.round(val/Math.max(steps[i-1][1],1)*100)+'%':'';
-      return `${i>0?'<div class="funnel-arrow">▼ '+pct+'</div>':''}
+      return`${i>0?'<div class="funnel-arrow">▼ '+pct+'</div>':''}
       <div class="funnel-step" style="width:${Math.max(w,20)}%;min-width:120px">${label}<span style="font-size:16px;font-weight:900">${val}</span></div>`;
     }).join('')+'</div>';
   }
-
-  // Leads trend
-  const lc={};d.forEach(r=>{
-    const v=pnum(r,'ae2');if(!v)return;
-    const dt=new Date(r.timestamp).toLocaleDateString();
-    lc[dt]=(lc[dt]||0)+v;
-  });
+  const lc={};d.forEach(r=>{const v=pnum(r,'ae2');if(!v)return;const dt=new Date(r.timestamp).toLocaleDateString();lc[dt]=(lc[dt]||0)+v;});
   const ls=Object.entries(lc).sort((a,b)=>a[0].localeCompare(b[0]));
   mkChart('chartLeads','line',ls.map(x=>x[0]),[{data:ls.map(x=>x[1]),borderColor:OR,backgroundColor:'rgba(240,112,32,.1)',fill:true,tension:.4}]);
-
-  // Route changes by region
   const rrc={};d.filter(r=>pget(r,'md4')==='Yes'||pget(r,'ckmd4')==='Yes').forEach(r=>{rrc[r.region||'Unknown']=(rrc[r.region||'Unknown']||0)+1;});
   const rre=Object.entries(rrc).sort((a,b)=>b[1]-a[1]).slice(0,8);
   mkChart('chartRouteChange','bar',rre.map(x=>x[0]),[{data:rre.map(x=>x[1]),backgroundColor:OR,borderRadius:6}],{indexAxis:'y'});
-
-  // Demo locations
   const dlc={};d.forEach(r=>{const v=pget(r,'tle2')||pget(r,'rsme3');if(v){v.split(',').forEach(x=>{const k=x.trim();if(k)dlc[k]=(dlc[k]||0)+1;});}});
   const dle=Object.entries(dlc).sort((a,b)=>b[1]-a[1]).slice(0,8);
   mkChart('chartDemoLoc','bar',dle.map(x=>x[0]),[{data:dle.map(x=>x[1]),backgroundColor:COLS,borderRadius:6}],{indexAxis:'y'});
 }
 
-// ── COVERAGE SECTION ──
 function renderCoverageSection(d){
   const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   const agents=[...new Set(d.filter(r=>r.role==='Agent').map(r=>r.name))];
@@ -708,13 +667,9 @@ function renderCoverageSection(d){
   const reVisits=d.reduce((sum,r)=>sum+pnum(r,'tle9')+pnum(r,'rsme8'),0);
   s('cov_re_visits',reVisits);
   s('cov_compliance',exp>0?Math.round(d.length/exp*100)+'%':'N/A');
-
-  // Geo chart
   const gc={};d.forEach(r=>{if(r.region)gc[r.region]=(gc[r.region]||0)+1;});
   const ge=Object.entries(gc).sort((a,b)=>b[1]-a[1]).slice(0,8);
   mkChart('chartGeo','bar',ge.map(x=>x[0]),[{data:ge.map(x=>x[1]),backgroundColor:OR,borderRadius:6}],{indexAxis:'y'});
-
-  // Compliance
   const regions=[...new Set(d.map(r=>r.region).filter(Boolean))].slice(0,6);
   const submitted=regions.map(reg=>d.filter(r=>r.region===reg).length);
   const expected=regions.map(reg=>Math.max(d.filter(r=>r.region===reg).length,new Set(d.filter(r=>r.region===reg&&r.role==='Agent').map(r=>r.name)).size*3));
@@ -722,65 +677,41 @@ function renderCoverageSection(d){
     {label:'Submitted',data:submitted,backgroundColor:OR,borderRadius:4},
     {label:'Expected',data:expected,backgroundColor:'#e8e8e8',borderRadius:4}
   ]);
-
   renderHeatmap('heatmap2',d);
-
-  // TL Accompaniment list
   const tlList=document.getElementById('tlAccList');
   if(tlList){
     const tls={};
-    d.filter(r=>r.role==='TL'&&r.session==='Morning').forEach(r=>{
-      const agents=pget(r,'tlm1');if(agents)tls[r.name]=(tls[r.name]||0)+agents.split(',').length;
-    });
+    d.filter(r=>r.role==='TL'&&r.session==='Morning').forEach(r=>{const agents=pget(r,'tlm1');if(agents)tls[r.name]=(tls[r.name]||0)+agents.split(',').length;});
     const tlEntries=Object.entries(tls).sort((a,b)=>b[1]-a[1]);
-    tlList.innerHTML=tlEntries.length?tlEntries.map(([name,cnt])=>`
-      <div class="sr"><span style="font-weight:700">${name}</span><span class="badge bt">${cnt} agents</span></div>`).join('')
+    tlList.innerHTML=tlEntries.length?tlEntries.map(([name,cnt])=>`<div class="sr"><span style="font-weight:700">${name}</span><span class="badge bt">${cnt} agents</span></div>`).join('')
       :'<p style="color:#888;font-size:12px;padding:10px">No TL accompaniment data</p>';
   }
-
-  // Focus chart
   const fc={};d.forEach(r=>{const v=pget(r,'tlm2')||pget(r,'rsmm2');if(v)fc[v]=(fc[v]||0)+1;});
   const fe=Object.entries(fc).sort((a,b)=>b[1]-a[1]).slice(0,6);
   if(fe.length)mkChart('chartFocus','doughnut',fe.map(x=>x[0]),[{data:fe.map(x=>x[1]),backgroundColor:COLS,borderWidth:2,borderColor:'#fff'}]);
 }
 
-// ── COACHING SECTION ──
 function renderCoachingSection(d){
   const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   const coachYes=d.filter(r=>pget(r,'ae3')==='Yes'||pget(r,'tle3')==='Yes'||pget(r,'rsme4')==='Yes'||pget(r,'cke4')==='Yes').length;
-  s('co_sessions',coachYes);
-  s('co_rate',d.length?Math.round(coachYes/d.length*100)+'%':'0%');
+  s('co_sessions',coachYes);s('co_rate',d.length?Math.round(coachYes/d.length*100)+'%':'0%');
   const agentsCoached=new Set();
   d.forEach(r=>{const a=pget(r,'tle1');if(a)a.split(',').forEach(x=>agentsCoached.add(x.trim()));});
   s('co_agents',agentsCoached.size);
-
-  // Topics
   const tc={};
-  d.forEach(r=>{
-    const t=pget(r,'ae4')||pget(r,'tle4')||pget(r,'rsme5')||pget(r,'cke5');
-    if(t)t.split(',').forEach(x=>{const k=x.trim();if(k)tc[k]=(tc[k]||0)+1;});
-  });
+  d.forEach(r=>{const t=pget(r,'ae4')||pget(r,'tle4')||pget(r,'rsme5')||pget(r,'cke5');if(t)t.split(',').forEach(x=>{const k=x.trim();if(k)tc[k]=(tc[k]||0)+1;});});
   s('co_topics_count',Object.keys(tc).length);
-
-  // Coach by role
   const roles=['Agent','TL','RSM','Clerk'];
   const rCounts=roles.map(role=>d.filter(r=>r.role===role&&(pget(r,'ae3')==='Yes'||pget(r,'tle3')==='Yes'||pget(r,'rsme4')==='Yes'||pget(r,'cke4')==='Yes')).length);
   mkChart('chartCoachRole','bar',roles,[{data:rCounts,backgroundColor:COLS,borderRadius:6}]);
-
-  // Topics chart
   const te=Object.entries(tc).sort((a,b)=>b[1]-a[1]).slice(0,8);
   if(te.length)mkChart('chartTopics','bar',te.map(x=>x[0]),[{data:te.map(x=>x[1]),backgroundColor:OR,borderRadius:6}],{indexAxis:'y'});
-
-  // Top coaches
   const coaches={};
-  d.filter(r=>r.role==='TL'||r.role==='RSM').forEach(r=>{
-    if(pget(r,'tle3')==='Yes'||pget(r,'rsme4')==='Yes')coaches[r.name]=(coaches[r.name]||0)+1;
-  });
+  d.filter(r=>r.role==='TL'||r.role==='RSM').forEach(r=>{if(pget(r,'tle3')==='Yes'||pget(r,'rsme4')==='Yes')coaches[r.name]=(coaches[r.name]||0)+1;});
   const ce=Object.entries(coaches).sort((a,b)=>b[1]-a[1]).slice(0,10);
   if(ce.length)mkChart('chartCoaches','bar',ce.map(x=>x[0]),[{data:ce.map(x=>x[1]),backgroundColor:COLS,borderRadius:6}],{indexAxis:'y'});
 }
 
-// ── TRAINING SECTION ──
 function renderTrainingSection(d){
   const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   const trainers=d.filter(r=>r.role==='Trainer');
@@ -794,49 +725,29 @@ function renderTrainingSection(d){
     const ef=pnum(r,'tre9');if(ef>0)totalEff+=ef;
   });
   s('tr_agents',totalAgents);s('tr_pass',totalPass);
-  s('tr_score',scoreCount?( totalScore/scoreCount).toFixed(1)+'/10':'N/A');
+  s('tr_score',scoreCount?(totalScore/scoreCount).toFixed(1)+'/10':'N/A');
   s('tr_effectiveness',eod.length?(totalEff/eod.length).toFixed(1)+'/10':'N/A');
   s('tr_conversion',eod.filter(r=>pget(r,'tre5')==='Yes').length);
-
-  // Session types
-  const stc={};trainers.filter(r=>r.session==='Morning').forEach(r=>{
-    const v=pget(r,'trm1');if(v)v.split(',').forEach(x=>{const k=x.trim();if(k)stc[k]=(stc[k]||0)+1;});
-  });
+  const stc={};trainers.filter(r=>r.session==='Morning').forEach(r=>{const v=pget(r,'trm1');if(v)v.split(',').forEach(x=>{const k=x.trim();if(k)stc[k]=(stc[k]||0)+1;});});
   const ste=Object.entries(stc).sort((a,b)=>b[1]-a[1]);
   if(ste.length)mkChart('chartTrainType','doughnut',ste.map(x=>x[0]),[{data:ste.map(x=>x[1]),backgroundColor:COLS,borderWidth:2,borderColor:'#fff'}]);
-
-  // Training topics
-  const ttc={};
-  eod.forEach(r=>{const t=pget(r,'tre3');if(t)t.split(',').forEach(x=>{const k=x.trim();if(k)ttc[k]=(ttc[k]||0)+1;});});
+  const ttc={};eod.forEach(r=>{const t=pget(r,'tre3');if(t)t.split(',').forEach(x=>{const k=x.trim();if(k)ttc[k]=(ttc[k]||0)+1;});});
   const tte=Object.entries(ttc).sort((a,b)=>b[1]-a[1]).slice(0,8);
   if(tte.length)mkChart('chartTrainTopics','bar',tte.map(x=>x[0]),[{data:tte.map(x=>x[1]),backgroundColor:OR,borderRadius:6}],{indexAxis:'y'});
-
-  // Gaps
   const gapsEl=document.getElementById('trainingGaps');
   if(gapsEl){
     const gaps=eod.map(r=>({name:r.name,gap:pget(r,'tre7'),cluster:r.cluster})).filter(x=>x.gap&&x.gap.length>2);
-    gapsEl.innerHTML=gaps.length?gaps.map(g=>`
-      <div style="border-left:3px solid var(--red);padding:8px 12px;margin-bottom:6px;background:#fff5f5;border-radius:0 8px 8px 0">
-        <div style="font-weight:800;font-size:12px">${g.name} <span style="color:#888;font-weight:400">${g.cluster||''}</span></div>
-        <div style="font-size:13px;margin-top:3px">${g.gap}</div>
-      </div>`).join('')
-    :'<p style="color:#888;font-size:12px;padding:10px">No gaps reported yet</p>';
+    gapsEl.innerHTML=gaps.length?gaps.map(g=>`<div style="border-left:3px solid var(--red);padding:8px 12px;margin-bottom:6px;background:#fff5f5;border-radius:0 8px 8px 0"><div style="font-weight:800;font-size:12px">${g.name} <span style="color:#888;font-weight:400">${g.cluster||''}</span></div><div style="font-size:13px;margin-top:3px">${g.gap}</div></div>`).join('')
+      :'<p style="color:#888;font-size:12px;padding:10px">No gaps reported yet</p>';
   }
-
-  // Action plans
   const actEl=document.getElementById('trainingActions');
   if(actEl){
     const acts=eod.map(r=>({name:r.name,action:pget(r,'tre8'),cluster:r.cluster})).filter(x=>x.action&&x.action.length>2);
-    actEl.innerHTML=acts.length?acts.map(a=>`
-      <div style="border-left:3px solid var(--green);padding:8px 12px;margin-bottom:6px;background:#f5fff7;border-radius:0 8px 8px 0">
-        <div style="font-weight:800;font-size:12px">${a.name} <span style="color:#888;font-weight:400">${a.cluster||''}</span></div>
-        <div style="font-size:13px;margin-top:3px">${a.action}</div>
-      </div>`).join('')
-    :'<p style="color:#888;font-size:12px;padding:10px">No action plans yet</p>';
+    actEl.innerHTML=acts.length?acts.map(a=>`<div style="border-left:3px solid var(--green);padding:8px 12px;margin-bottom:6px;background:#f5fff7;border-radius:0 8px 8px 0"><div style="font-weight:800;font-size:12px">${a.name} <span style="color:#888;font-weight:400">${a.cluster||''}</span></div><div style="font-size:13px;margin-top:3px">${a.action}</div></div>`).join('')
+      :'<p style="color:#888;font-size:12px;padding:10px">No action plans yet</p>';
   }
 }
 
-// ── DEMO SECTION ──
 function renderDemoSection(d){
   const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   let planned=0,done=0,reVisits=0,boiled=0;
@@ -847,53 +758,33 @@ function renderDemoSection(d){
     if(pget(r,'cke3')==='Yes')boiled++;
   });
   const rate=planned>0?Math.round(done/planned*100):0;
-  s('d_planned',planned);s('d_done',done);s('d_rate',rate+'%');
-  s('d_re_visits',reVisits);s('d_boiled',boiled);
-
-  // IDC stock per cluster
+  s('d_planned',planned);s('d_done',done);s('d_rate',rate+'%');s('d_re_visits',reVisits);s('d_boiled',boiled);
   const idc={};
-  d.filter(r=>r.role==='TL'&&r.session==='EOD').forEach(r=>{
-    const stock=pget(r,'tle5');if(stock&&r.cluster)idc[r.cluster]=stock;
-  });
+  d.filter(r=>r.role==='TL'&&r.session==='EOD').forEach(r=>{const stock=pget(r,'tle5');if(stock&&r.cluster)idc[r.cluster]=stock;});
   const idcEl=document.getElementById('idcStockList');
   if(idcEl){
     const entries=Object.entries(idc);
     idcEl.innerHTML=entries.length?`<table style="width:100%;font-size:12px"><thead><tr><th>Cluster</th><th>Stock</th><th>Health</th></tr></thead><tbody>`+
-      entries.map(([cluster,stock])=>{
-        const nums=stock.match(/\d+/g)||[];const total=nums.reduce((a,b)=>a+parseInt(b),0);
-        const health=total>20?'🟢 Healthy':total>5?'🟡 Low':'🔴 Critical';
-        return `<tr><td style="font-weight:700">${cluster}</td><td>${stock}</td><td>${health}</td></tr>`;
-      }).join('')+'</tbody></table>'
-    :'<p style="color:#888;font-size:12px;padding:10px">No IDC stock data yet</p>';
-
-    const idc_kpi=document.getElementById('d_idc_total');
-    if(idc_kpi)idc_kpi.textContent=entries.length+' clusters';
+      entries.map(([cluster,stock])=>{const nums=stock.match(/\d+/g)||[];const total=nums.reduce((a,b)=>a+parseInt(b),0);const health=total>20?'🟢 Healthy':total>5?'🟡 Low':'🔴 Critical';return`<tr><td style="font-weight:700">${cluster}</td><td>${stock}</td><td>${health}</td></tr>`;}).join('')+'</tbody></table>'
+      :'<p style="color:#888;font-size:12px;padding:10px">No IDC stock data yet</p>';
+    const idc_kpi=document.getElementById('d_idc_total');if(idc_kpi)idc_kpi.textContent=entries.length+' clusters';
   }
-
-  // Demo locations planned
   const dlp={};d.forEach(r=>{const v=pget(r,'tlm2');if(v)dlp[v]=(dlp[v]||0)+1;});
-  const dle=Object.entries(dlp).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  if(dle.length)mkChart('chartDemoLocPlan','bar',dle.map(x=>x[0]),[{data:dle.map(x=>x[1]),backgroundColor:OR,borderRadius:6}],{indexAxis:'y'});
-
-  // Demo locations actual
+  const dlpe=Object.entries(dlp).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  if(dlpe.length)mkChart('chartDemoLocPlan','bar',dlpe.map(x=>x[0]),[{data:dlpe.map(x=>x[1]),backgroundColor:OR,borderRadius:6}],{indexAxis:'y'});
   const dla={};d.forEach(r=>{const v=pget(r,'tle2')||pget(r,'rsme3');if(v){v.split(',').forEach(x=>{const k=x.trim();if(k)dla[k]=(dla[k]||0)+1;});}});
   const dla2=Object.entries(dla).sort((a,b)=>b[1]-a[1]).slice(0,8);
   if(dla2.length)mkChart('chartDemoLocActual','bar',dla2.map(x=>x[0]),[{data:dla2.map(x=>x[1]),backgroundColor:COLS,borderRadius:6}],{indexAxis:'y'});
 }
 
-// ── FIELD INTELLIGENCE FEED ──
 function renderFeed(){
   const search=(document.getElementById('feed_search')?.value||'').toLowerCase();
   const role=document.getElementById('feed_role')?.value||'';
   const region=document.getElementById('feed_region')?.value||'';
   const type=document.getElementById('feed_type')?.value||'all';
-
   let items=[];
   filteredData.forEach(r=>{
-    if(role&&r.role!==role)return;
-    if(region&&r.region!==region)return;
-
-    // Collect all text fields
+    if(role&&r.role!==role)return;if(region&&r.region!==region)return;
     const fields=[
       {text:r.notes,label:'Notes',type:'notes'},
       {text:pget(r,'am4')||pget(r,'ckm4'),label:'Performance Risk',type:'risks'},
@@ -904,7 +795,6 @@ function renderFeed(){
       {text:pget(r,'tre7'),label:'Training Gap',type:'notes'},
       {text:pget(r,'tre8'),label:'Action Plan',type:'notes'},
     ];
-
     fields.forEach(f=>{
       if(!f.text||f.text.length<3)return;
       if(type!=='all'&&f.type!==type)return;
@@ -912,19 +802,14 @@ function renderFeed(){
       items.push({...r,feedText:f.text,feedLabel:f.label,feedType:f.type});
     });
   });
-
-  const list=document.getElementById('feedList');
-  if(!list)return;
+  const list=document.getElementById('feedList');if(!list)return;
   if(!items.length){list.innerHTML='<div class="feed-empty">No comments found for selected filters</div>';return;}
-
   const roleClass={Agent:'ba',TL:'bt',RSM:'br',Trainer:'btr',Clerk:'bc'};
   const typeColor={notes:'var(--or)',risks:'var(--red)',support:'var(--blue)',blockers:'var(--purple)'};
-
   list.innerHTML=items.slice(0,50).map((item,i)=>`
     <div class="feed-item" style="border-left-color:${typeColor[item.feedType]||'var(--or)'}">
       <div class="feed-item-header">
-        <div>
-          <span class="feed-item-name">${item.name}</span>
+        <div><span class="feed-item-name">${item.name}</span>
           <span class="badge ${roleClass[item.role]||''}" style="margin-left:6px">${item.role}</span>
           <span style="background:#f0f0f0;color:#555;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;margin-left:4px">${item.feedLabel}</span>
         </div>
@@ -940,7 +825,6 @@ function expandFeed(id,btn){
   else{el.classList.add('collapsed');btn.textContent='Show more ▼';}
 }
 
-// ── INTEL CARDS ──
 function renderIntelCards(d){
   const grid=document.getElementById('intelCards');if(!grid)return;
   const cards=[];
@@ -954,7 +838,6 @@ function renderIntelCards(d){
   grid.innerHTML=cards.join('');
 }
 
-// ── TABLE ──
 function renderTable(d){
   document.getElementById('tableCount').textContent=d.length;
   const tbody=document.getElementById('tableBody');
@@ -973,15 +856,14 @@ function renderTable(d){
   </tr>`).join('');
 }
 
-// ── EXPORT ──
 function exportCSV(){
   const keys=['timestamp','role','name','session','country','region','cluster','ward','lat','lng','notes','challenge'];
-  const csv=[keys.join(','),...filteredData.map(r=>keys.map(k=>`"${(r[k]||'').toString().replace(/"/g,'""')}"`).join(','))].join('\n');
+  const csv=[keys.join(','),...filteredData.map(r=>keys.map(k=>`"${(r[k]||'').toString().replace(/"/g,'""')}"`).join(','))].join('
+');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   a.download='FieldActivities_Export.csv';a.click();
 }
 
-// ── MAP ──
 let pendingPts=null;
 function loadMap(d){
   const pts=d.filter(r=>r.lat&&r.lng&&!isNaN(r.lat)&&!isNaN(r.lng));
@@ -1011,7 +893,6 @@ function renderMap(pts){
   }catch(e){console.log('Map:',e.message);}
 }
 
-// ── START ──
 loadData();
 setInterval(loadData,120000);
 </script>
