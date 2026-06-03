@@ -157,8 +157,21 @@ small{font-size:12px;color:var(--muted);line-height:1.45}
       <button class="role"        onclick="setRole('Clerk',this)">🔧 Clerk</button>
     </div>
     <div style="height:12px"></div>
-    <label>Name</label>
-    <div id="nameSelectBox"></div>
+    <label>Country</label>
+    <div id="countrySelectBox"></div>
+    <div id="regionRow" class="hidden" style="margin-top:10px">
+      <label>Region</label>
+      <div id="regionSelectBox"></div>
+    </div>
+    <div id="clusterRow" class="hidden" style="margin-top:10px">
+      <label>Cluster</label>
+      <div id="clusterCascadeBox"></div>
+    </div>
+    <div id="nameRow" class="hidden" style="margin-top:10px">
+      <label>Name</label>
+      <div id="nameSelectBox"></div>
+    </div>
+    <div id="cascadeNotice" class="notice amber hidden" style="margin-top:8px">Select country, region and cluster to see names.</div>
   </div>
 
   <div id="submitPage">
@@ -180,9 +193,8 @@ small{font-size:12px;color:var(--muted);line-height:1.45}
           <div><label>Region</label><input id="region" readonly></div>
         </div>
         <div style="height:10px"></div>
-        <label>Cluster</label>
-        <div id="clusterSelectBox"></div>
-        <div style="height:10px"></div>
+        <!-- Cluster pre-filled from cascade selector above -->
+        <div style="height:4px"></div>
         <div id="gpsBox" class="notice greenbox">
           <b id="gpsWard">Capturing location…</b><br>
           <small>GPS is recorded automatically.</small>
@@ -510,7 +522,7 @@ function init(){
   if(st)st.textContent=session+' session is open';
   document.getElementById('formTitle').textContent=session==='EOD'?'Close of Day':session;
   updateSessionPills();
-  loadNames();loadDropdowns();loadAdminFields();
+  loadCascadeCountry();loadDropdowns();loadAdminFields();
   refreshFromGoogleSheets().catch(()=>{});
   captureGPS();refreshAdmin();renderQuestionGuide();initQM();loadSessSettings();
   pullQuestionsFromSheets().catch(()=>{});
@@ -592,12 +604,13 @@ function setTab(t){
   if(t==='admin'){renderActivity();refreshAdmin();loadSessSettings();}
 }
 function setRole(r,btn){
-  role=r;msValues.name=[];
+  role=r;
+  // Reset cascade when role changes
+  msValues.name=[];msValues.cascadeCountry=[];msValues.cascadeRegion=[];msValues.cascadeCluster=[];
   document.querySelectorAll('.role').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  const nameLbl=document.getElementById('ms_label_name');
-  if(nameLbl)nameLbl.textContent='Select '+r+' name';
-  loadNames();afterNameSelected();
+  loadCascadeCountry();
+  afterNameSelected();
   const cc=document.getElementById('closedCard');if(cc)cc.classList.add('hidden');
   document.getElementById('formCard').classList.remove('hidden');
   document.querySelector('.bottom').classList.remove('hidden');
@@ -606,15 +619,87 @@ function setRole(r,btn){
 // ════════════════════════════════════════════
 //  NAMES & DROPDOWNS
 // ════════════════════════════════════════════
-function roleNames(r){
-  const m=getMapping();
-  if(r==='Agent')return[...new Set(m.map(x=>x.AgentName).filter(Boolean))];
-  if(r==='TL')return[...new Set(m.map(x=>x.TLName).filter(Boolean))];
-  if(r==='Trainer')return[...new Set(m.map(x=>x.TrainerName).filter(Boolean))];
-  if(r==='Clerk')return[...new Set(m.map(x=>x.ClerkName).filter(Boolean))];
-  return[...new Set(m.map(x=>x.RSMName).filter(Boolean))];
+// ════════════════════════════════════════════
+//  CASCADE: Country → Region → Cluster → Name
+// ════════════════════════════════════════════
+function roleNameField(r){
+  if(r==='Agent')return'AgentName';
+  if(r==='TL')return'TLName';
+  if(r==='Trainer')return'TrainerName';
+  if(r==='Clerk')return'ClerkName';
+  return'RSMName';
 }
-function loadNames(){renderMultiSelect('nameSelectBox','name',roleNames(role),false,'Select '+role+' name');}
+
+function loadCascadeCountry(){
+  const m=getMapping();
+  const countries=[...new Set(m.map(x=>x.Country).filter(Boolean))].sort();
+  renderMultiSelect('countrySelectBox','cascadeCountry',countries,false,'Select country');
+  // hide downstream rows
+  document.getElementById('regionRow').classList.add('hidden');
+  document.getElementById('clusterRow').classList.add('hidden');
+  document.getElementById('nameRow').classList.add('hidden');
+  document.getElementById('cascadeNotice').classList.remove('hidden');
+  msValues.cascadeRegion=[];msValues.cascadeCluster=[];msValues.name=[];
+}
+
+function onCascadeCountry(){
+  const country=firstMS('cascadeCountry');
+  if(!country){
+    document.getElementById('regionRow').classList.add('hidden');
+    document.getElementById('clusterRow').classList.add('hidden');
+    document.getElementById('nameRow').classList.add('hidden');
+    return;
+  }
+  const m=getMapping();
+  const regions=[...new Set(m.filter(x=>x.Country===country).map(x=>x.Region).filter(Boolean))].sort();
+  renderMultiSelect('regionSelectBox','cascadeRegion',regions,false,'Select region');
+  document.getElementById('regionRow').classList.remove('hidden');
+  document.getElementById('clusterRow').classList.add('hidden');
+  document.getElementById('nameRow').classList.add('hidden');
+  msValues.cascadeRegion=[];msValues.cascadeCluster=[];msValues.name=[];
+}
+
+function onCascadeRegion(){
+  const country=firstMS('cascadeCountry');
+  const region=firstMS('cascadeRegion');
+  if(!region){
+    document.getElementById('clusterRow').classList.add('hidden');
+    document.getElementById('nameRow').classList.add('hidden');
+    return;
+  }
+  const m=getMapping();
+  const clusters=[...new Set(m.filter(x=>x.Country===country&&x.Region===region).map(x=>x.Cluster).filter(Boolean))].sort();
+  renderMultiSelect('clusterCascadeBox','cascadeCluster',clusters,false,'Select cluster');
+  document.getElementById('clusterRow').classList.remove('hidden');
+  document.getElementById('nameRow').classList.add('hidden');
+  msValues.cascadeCluster=[];msValues.name=[];
+}
+
+function onCascadeCluster(){
+  const country=firstMS('cascadeCountry');
+  const region=firstMS('cascadeRegion');
+  const cluster=firstMS('cascadeCluster');
+  if(!cluster){
+    document.getElementById('nameRow').classList.add('hidden');
+    return;
+  }
+  const m=getMapping();
+  const nameField=roleNameField(role);
+  const names=[...new Set(m.filter(x=>x.Country===country&&x.Region===region&&x.Cluster===cluster).map(x=>x[nameField]).filter(Boolean))].sort();
+  renderMultiSelect('nameSelectBox','name',names,false,'Select '+role+' name');
+  document.getElementById('nameRow').classList.remove('hidden');
+  document.getElementById('cascadeNotice').classList.add('hidden');
+  // Pre-fill hidden country/region/cluster fields in form
+  const countryEl=document.getElementById('country');if(countryEl)countryEl.value=country;
+  const regionEl=document.getElementById('region');if(regionEl)regionEl.value=region;
+  msValues.clusterSelect=[cluster];updateMSLabel('clusterSelect','Select cluster');
+  afterNameSelected();
+}
+
+function loadNames(){
+  // Called on init — just load country cascade
+  loadCascadeCountry();
+}
 function loadDropdowns(){
   const cfg2=getConfig(),m=getMapping(),currentName=firstMS('name');
   renderMultiSelect('keyChallengeBox','keyChallenge',cfg2.challenges,false,'Select challenge');
@@ -629,19 +714,21 @@ function loadDropdowns(){
   renderMultiSelect('tlDemoLocationsBox','tlDemoLocations',cfg2.demoLocations,true,'Select location(s)');
   renderMultiSelect('rsmDemoLocationsBox','rsmDemoLocations',cfg2.demoLocations,true,'Select location(s)');
   renderMultiSelect('clusterSelectBox','clusterSelect',[...new Set(m.map(x=>x.Cluster).filter(Boolean))],false,'Select cluster');
-  renderMultiSelect('tlAgentsBox','tlAgents',[...new Set(m.filter(x=>!currentName||x.TLName===currentName).map(x=>x.AgentName).filter(Boolean))],true,'Select agent(s)');
-  renderMultiSelect('rsmTLsBox','rsmTLs',[...new Set(m.filter(x=>!currentName||x.RSMName===currentName).map(x=>x.TLName).filter(Boolean))],true,'Select TL(s)');
+  const cascadeCluster=firstMS('cascadeCluster');
+  const clusterFilter=x=>!cascadeCluster||x.Cluster===cascadeCluster;
+  renderMultiSelect('tlAgentsBox','tlAgents',[...new Set(m.filter(clusterFilter).map(x=>x.AgentName).filter(Boolean))],true,'Select agent(s)');
+  renderMultiSelect('rsmTLsBox','rsmTLs',[...new Set(m.filter(clusterFilter).map(x=>x.TLName).filter(Boolean))],true,'Select TL(s)');
   renderMultiSelect('rsmClustersBox','rsmClusters',[...new Set(m.map(x=>x.Cluster).filter(Boolean))],true,'Select cluster(s)');
   renderMultiSelect('tlDoneSoFarBox','tlDoneSoFar',['Visited cluster','Did demos','Coached agents','Stock take done','None yet'],true,'Select all that apply');
   renderMultiSelect('tlBlockerBox','tlBlocker',['No blocker','Transport','Agent absent','No stock','Other'],false,'Select blocker');
   renderMultiSelect('tlSupportBox','tlSupport',['No','Yes — need RSM support'],false,'Select');
   renderMultiSelect('tlFocusBox','tlFocus',['Onboarding','Coaching agents','Stock take','Cluster audit','Problem solve'],false,'Select focus');
-  renderMultiSelect('tlAgentsEodBox','tlAgentsEod',[...new Set(m.filter(x=>!currentName||x.TLName===currentName).map(x=>x.AgentName).filter(Boolean))],true,'Select agent(s)');
+  renderMultiSelect('tlAgentsEodBox','tlAgentsEod',[...new Set(m.filter(clusterFilter).map(x=>x.AgentName).filter(Boolean))],true,'Select agent(s)');
   renderMultiSelect('rsmDoneSoFarBox','rsmDoneSoFar',['Visited TL','Visited cluster','Coaching done','Stock check','None yet'],true,'Select all that apply');
   renderMultiSelect('rsmBlockerBox','rsmBlocker',['No blocker','Transport','TL absent','Market issue','Other'],false,'Select blocker');
   renderMultiSelect('rsmSupportBox','rsmSupport',['No','Yes — need HQ support'],false,'Select');
   renderMultiSelect('rsmFocusBox','rsmFocus',['Coaching TLs','Cluster audit','Stock check','Problem solve','Market visit'],false,'Select focus');
-  renderMultiSelect('rsmTLsEodBox','rsmTLsEod',[...new Set(m.filter(x=>!currentName||x.RSMName===currentName).map(x=>x.TLName).filter(Boolean))],true,'Select TL(s)');
+  renderMultiSelect('rsmTLsEodBox','rsmTLsEod',[...new Set(m.filter(clusterFilter).map(x=>x.TLName).filter(Boolean))],true,'Select TL(s)');
   renderMultiSelect('clerkBoiledBox','clerkBoiled',['Yes','No'],false,'Select yes/no');
   renderMultiSelect('clerkTrainedBox','clerkTrained',['Usage','Repayment','Warranty','Contract terms','Customer eCoa App'],true,'Select all that apply');
   renderMultiSelect('clerkCoachHeldBox','clerkCoachHeld',['No','Yes'],false,'Select yes/no');
@@ -649,11 +736,12 @@ function loadDropdowns(){
   renderMultiSelect('clerkChallengeBox','clerkChallenge',cfg2.challenges,false,'Select challenge');
   renderMultiSelect('trainerDoneSoFarBox','trainerDoneSoFar',['Completed intro','Covered product knowledge','Did demo practice','Assessment started','None yet'],true,'Select all that apply');
   renderMultiSelect('trainerBlockerBox','trainerBlocker',['No blocker','Agents absent','Venue issue','Materials missing','Other'],false,'Select blocker');
-  renderMultiSelect('trainerAgentsMorningBox','trainerAgentsMorning',[...new Set(m.map(x=>x.AgentName).filter(Boolean))],true,'Select agent(s)');
+  renderMultiSelect('trainerAgentsMorningBox','trainerAgentsMorning',[...new Set(m.filter(clusterFilter).map(x=>x.AgentName).filter(Boolean))],true,'Select agent(s)');
   renderMultiSelect('trainerTopicsMorningBox','trainerTopicsMorning',defaultConfig.trainerTopics,true,'Select topic(s)');
   const tal=[...new Set(m.map(x=>x.AgentName).filter(Boolean))];
   renderMultiSelect('trainerSessionTypeBox','trainerSessionType',['Classroom training','Field ride-along','One-on-one coaching','Group workshop','Assessment/test','Refresher training'],false,'Select session type');
-  renderMultiSelect('trainerAgentsBox','trainerAgents',tal,true,'Select agent(s)');
+  const talFiltered=[...new Set(m.filter(clusterFilter).map(x=>x.AgentName).filter(Boolean))];
+  renderMultiSelect('trainerAgentsBox','trainerAgents',talFiltered,true,'Select agent(s)');
   renderMultiSelect('trainerTopicsBox','trainerTopics',defaultConfig.trainerTopics,true,'Select topic(s)');
   renderMultiSelect('trainerConversionBox','trainerConversion',['No','Yes'],false,'Select yes/no');
   renderMultiSelect('trainerRepayBox','trainerRepay',['No','Yes'],false,'Select yes/no');
@@ -749,13 +837,14 @@ function afterNameSelected(){
   document.getElementById('needName').classList.toggle('hidden',has);
   document.getElementById('dynamicForm').classList.toggle('hidden',!has);
   if(!has)return;
-  const m=getMapping().find(x=>x.AgentName===name||x.TLName===name||x.RSMName===name||x.TrainerName===name||x.ClerkName===name);
-  if(m){
-    document.getElementById('country').value=m.Country||'';
-    document.getElementById('region').value=m.Region||'';
-    msValues.clusterSelect=[m.Cluster||''];
-    updateMSLabel('clusterSelect','Select cluster');
-  }
+  // Country/region/cluster already set by cascade — just ensure form fields are filled
+  const country=firstMS('cascadeCountry');
+  const region=firstMS('cascadeRegion');
+  const cluster=firstMS('cascadeCluster');
+  const countryEl=document.getElementById('country');if(countryEl)countryEl.value=country;
+  const regionEl=document.getElementById('region');if(regionEl)regionEl.value=region;
+  msValues.clusterSelect=[cluster];
+  updateMSLabel('clusterSelect','Select cluster');
   loadDropdowns();renderDynamicForm();
 }
 function toggleOtherChallenge(){document.getElementById('challengeOtherWrap').classList.toggle('hidden',firstMS('keyChallenge')!=='Other');}
@@ -1237,6 +1326,9 @@ function selectMS(key,input,multiple){
   else{if(input.checked)msValues[key].push(input.value);else msValues[key]=msValues[key].filter(v=>v!==input.value);msValues[key]=[...new Set(msValues[key])];}
   updateMSLabel(key);
   if(key==='name')afterNameSelected();
+  if(key==='cascadeCountry')onCascadeCountry();
+  if(key==='cascadeRegion')onCascadeRegion();
+  if(key==='cascadeCluster')onCascadeCluster();
   if(key==='agentCoachHeld')toggleCoach('agent');
   if(key==='tlCoachHeld')toggleCoach('tl');
   if(key==='rsmCoachHeld')toggleCoach('rsm');
