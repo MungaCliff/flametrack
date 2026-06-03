@@ -146,7 +146,7 @@ tr:hover td{background:#fffaf5}
     <div class="fg" id="fg2" style="display:none"><label>To</label><input type="date" id="f_to"></div>
     <div class="fg"><label>Country</label><select id="f_country" onchange="cascadeRegions()"><option value="">All Countries</option></select></div>
     <div class="fg"><label>Region</label><select id="f_region" onchange="cascadeClusters()"><option value="">All Regions</option></select></div>
-    <div class="fg"><label>Cluster</label><select id="f_cluster"><option value="">All Clusters</option></select></div>
+    <div class="fg"><label>Cluster</label><select id="f_cluster" onchange="applyFilters()"><option value="">All Clusters</option></select></div>
     <div class="fg"><label>Role</label>
       <select id="f_role"><option value="">All Roles</option><option>Agent</option><option>TL</option><option>RSM</option><option>Trainer</option><option>Clerk</option></select>
     </div>
@@ -401,13 +401,13 @@ function cascadeRegions(){
   const rows=country?allData.filter(r=>r.country===country):allData;
   const regions=[...new Set(rows.map(r=>r.region).filter(Boolean))].sort();
   fillSelect('f_region',regions);
-  // Clear cluster when country changes and re-cascade
   const clusterEl=document.getElementById('f_cluster');
   if(clusterEl)clusterEl.value='';
-  cascadeClusters();
+  cascadeClusters(false); // false = don't apply yet, we apply below
+  applyFilters(); // auto-apply when country changes
 }
 
-function cascadeClusters(){
+function cascadeClusters(autoApply=true){
   const country=document.getElementById('f_country')?.value||'';
   const region=document.getElementById('f_region')?.value||'';
   let rows=allData;
@@ -415,6 +415,7 @@ function cascadeClusters(){
   if(region)rows=rows.filter(r=>r.region===region);
   const clusters=[...new Set(rows.map(r=>r.cluster).filter(Boolean))].sort();
   fillSelect('f_cluster',clusters);
+  if(autoApply)applyFilters(); // auto-apply when region changes
 }
 
 function qDate(mode,btn){
