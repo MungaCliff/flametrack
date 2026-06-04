@@ -127,6 +127,7 @@ tr:hover td{background:#fffaf5}
   <button class="dn" onclick="showSection('training',this)">🎓 Training</button>
   <button class="dn" onclick="showSection('demos',this)">🎯 Demos</button>
   <button class="dn" onclick="showSection('intelligence',this)">🧠 Field Intelligence</button>
+  <button class="dn" onclick="showSection('compliance',this)">✅ Compliance</button>
   <button class="dn" onclick="showSection('records',this)">📋 Records</button>
 </div>
 
@@ -312,6 +313,68 @@ tr:hover td{background:#fffaf5}
   <div class="sg" id="intelCards"></div>
 </div>
 
+<!-- COMPLIANCE -->
+<div id="sec_compliance" class="dash-section">
+  <div class="sec-title">✅ Compliance Tracker</div>
+
+  <!-- Compliance KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi g"><b id="comp_overall">-</b><span>Overall Compliance</span></div>
+    <div class="kpi b"><b id="comp_morning">-</b><span>Morning Compliance</span></div>
+    <div class="kpi b"><b id="comp_midday">-</b><span>Midday Compliance</span></div>
+    <div class="kpi b"><b id="comp_eod">-</b><span>EOD Compliance</span></div>
+    <div class="kpi"><b id="comp_expected">-</b><span>Expected Submissions</span></div>
+    <div class="kpi r"><b id="comp_missing_count">-</b><span>Missing Submissions</span></div>
+  </div>
+
+  <!-- Info note -->
+  <div style="background:#fff8f0;border:1px solid #f5d0a0;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#7a4000">
+    📅 <b>Working days = Monday–Saturday.</b> Expected = working days in date range × sessions selected (3 if all sessions, 1 if filtered to one session). Compliance is affected by all filters above — filter by Role, Country, Region, Cluster, Session or Name to drill down.
+  </div>
+
+  <!-- Top 10 table -->
+  <div class="tw" style="margin-bottom:16px">
+    <div class="tw-header">
+      <h3>🏆 Top 10 — Highest Compliance</h3>
+      <button class="exp-btn" onclick="exportComplianceCSV()">⬇ Export CSV</button>
+    </div>
+    <table style="min-width:500px">
+      <thead><tr>
+        <th>Name</th><th>Role</th><th>Region</th><th>Cluster</th>
+        <th>🌅 Morning</th><th>☀️ Midday</th><th>🌆 EOD</th>
+        <th>Total</th><th>Expected</th><th>%</th><th>Status</th>
+      </tr></thead>
+      <tbody id="compTopBody">
+        <tr><td colspan="11" style="text-align:center;padding:20px;color:#888">No data</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Bottom 10 table -->
+  <div class="tw" style="margin-bottom:16px">
+    <div class="tw-header">
+      <h3>⚠️ Bottom 10 — Needs Attention (<span id="compTableCount">0</span> total people)</h3>
+    </div>
+    <table style="min-width:500px">
+      <thead><tr>
+        <th>Name</th><th>Role</th><th>Region</th><th>Cluster</th>
+        <th>🌅 Morning</th><th>☀️ Midday</th><th>🌆 EOD</th>
+        <th>Total</th><th>Expected</th><th>%</th><th>Status</th>
+      </tr></thead>
+      <tbody id="compBottomBody">
+        <tr><td colspan="11" style="text-align:center;padding:20px;color:#888">No data</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Compliance bar chart -->
+  <div class="cg">
+    <div class="cc full"><div class="cc-title">📊 Compliance by Person (bottom performers first)</div><div class="cw tall"><canvas id="chartCompPerson"></canvas></div></div>
+    <div class="cc"><div class="cc-title">🌍 Compliance by Region</div><div class="cw"><canvas id="chartCompRegion"></canvas></div></div>
+    <div class="cc"><div class="cc-title">👥 Compliance by Role</div><div class="cw"><canvas id="chartCompRole"></canvas></div></div>
+  </div>
+</div>
+
 <!-- RECORDS -->
 <div id="sec_records" class="dash-section">
   <div class="tw">
@@ -488,7 +551,7 @@ function renderAll(){
   renderKPIs(d);renderOverviewCharts(d);renderHeatmap('heatmap',d);renderSumCards(d);
   renderSalesSection(d);renderCoverageSection(d);renderCoachingSection(d);
   renderTrainingSection(d);renderDemoSection(d);renderFeed();renderIntelCards(d);
-  renderTable(d);loadMap(d);
+  renderComplianceSection(d);renderTable(d);loadMap(d);
 }
 
 const OR='#F07020',COLS=['#F07020','#174ea6','#22a63a','#7c3aed','#986300','#c0392b','#F59050','#0ea5e9'];
@@ -503,17 +566,80 @@ function mkChart(id,type,labels,datasets,extra={}){
   }});
 }
 
+// ── WORKING DAYS HELPER (Mon-Sat) ──
+function countWorkingDays(startDate, endDate){
+  let count=0, d=new Date(startDate);
+  d.setHours(0,0,0,0);
+  const end=new Date(endDate); end.setHours(23,59,59,999);
+  while(d<=end){
+    const day=d.getDay(); // 0=Sun,6=Sat
+    if(day!==0) count++; // Mon-Sat
+    d.setDate(d.getDate()+1);
+  }
+  return count;
+}
+
+function getDateRange(d){
+  // Returns {start, end, workingDays} from filtered data or date filter
+  const now=new Date();
+  if(activeDateMode==='today'){
+    return{start:new Date(now.toDateString()),end:now,workingDays:now.getDay()!==0?1:0};
+  }
+  if(activeDateMode==='yesterday'){
+    const y=new Date(now);y.setDate(now.getDate()-1);
+    return{start:new Date(y.toDateString()),end:y,workingDays:y.getDay()!==0?1:0};
+  }
+  if(activeDateMode==='7d'){
+    const s=new Date(now-7*864e5);
+    return{start:s,end:now,workingDays:countWorkingDays(s,now)};
+  }
+  if(activeDateMode==='30d'){
+    const s=new Date(now-30*864e5);
+    return{start:s,end:now,workingDays:countWorkingDays(s,now)};
+  }
+  if(activeDateMode==='month'){
+    const s=new Date(now.getFullYear(),now.getMonth(),1);
+    return{start:s,end:now,workingDays:countWorkingDays(s,now)};
+  }
+  if(activeDateMode==='custom'){
+    const fs=document.getElementById('f_from').value;
+    const fe=document.getElementById('f_to').value;
+    if(fs&&fe){
+      const s=new Date(fs),e=new Date(fe);
+      return{start:s,end:e,workingDays:countWorkingDays(s,e)};
+    }
+  }
+  // All time — use min/max from actual data
+  if(!d||!d.length) return{start:new Date(),end:new Date(),workingDays:0};
+  const timestamps=d.map(r=>new Date(r.timestamp)).filter(t=>!isNaN(t));
+  if(!timestamps.length) return{start:new Date(),end:new Date(),workingDays:0};
+  const minD=new Date(Math.min(...timestamps));
+  const maxD=new Date(Math.max(...timestamps));
+  return{start:minD,end:maxD,workingDays:countWorkingDays(minD,maxD)};
+}
+
+function calcExpected(workingDays, sessionFilter){
+  // If a specific session is filtered, expect 1 per working day; else 3
+  const sessionsPerDay = sessionFilter ? 1 : 3;
+  return workingDays * sessionsPerDay;
+}
+
 function renderKPIs(d){
   const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  const agents=[...new Set(d.filter(r=>r.role==='Agent').map(r=>r.name))];
-  const total=d.length,exp=Math.max(agents.length*3,total);
-  const compliance=exp>0?Math.round((total/exp)*100):0;
+  const sessionFilter=document.getElementById('f_session')?.value||'';
+  const {workingDays}=getDateRange(d);
+  const people=[...new Set(d.map(r=>r.name).filter(Boolean))];
+  const sessPerDay=sessionFilter?1:3;
+  const expected=people.length*sessPerDay*workingDays;
+  const total=d.length;
+  const compliance=expected>0?Math.min(100,Math.round((total/expected)*100)):0;
   s('k_total',total);s('k_compliance',compliance+'%');
-  s('k_agents',agents.length);s('k_tls',new Set(d.filter(r=>r.role==='TL').map(r=>r.name)).size);
+  s('k_agents',new Set(d.filter(r=>r.role==='Agent').map(r=>r.name)).size);
+  s('k_tls',new Set(d.filter(r=>r.role==='TL').map(r=>r.name)).size);
   s('k_rsms',new Set(d.filter(r=>r.role==='RSM').map(r=>r.name)).size);
   s('k_trainers',new Set(d.filter(r=>r.role==='Trainer').map(r=>r.name)).size);
   s('k_clerks',new Set(d.filter(r=>r.role==='Clerk').map(r=>r.name)).size);
-  s('k_missing',Math.max(0,exp-total));
+  s('k_missing',Math.max(0,expected-total));
   s('k_morning',d.filter(r=>r.session==='Morning').length);
   s('k_midday',d.filter(r=>r.session==='Midday').length);
   s('k_eod',d.filter(r=>r.session==='EOD').length);
@@ -890,6 +1016,205 @@ function renderMap(pts){
        .bindPopup(`<b>${p.name}</b><br><span style="color:${rc[p.role]||'#888'}">${p.role}</span> · ${p.session}<br>${p.ward||''}<br><small>${p.timestamp||''}</small>`);
     });
   }catch(e){console.log('Map:',e.message);}
+}
+
+// ════════════════════════════════════════════
+//  COMPLIANCE SECTION
+// ════════════════════════════════════════════
+function compBadge(pct){
+  const emoji = pct>=90 ? '🟢' : pct>=70 ? '🟡' : '🔴';
+  const color = pct>=90 ? 'var(--green)' : pct>=70 ? 'var(--or)' : 'var(--red)';
+  return `<span style="font-weight:900;font-size:13px;color:${color}">${emoji} ${pct}%</span>`;
+}
+
+function renderComplianceSection(d){
+  const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  const sessionFilter=document.getElementById('f_session')?.value||'';
+  const {workingDays,start,end}=getDateRange(d);
+
+  // Get all unique people from filtered data
+  const peopleMap={};
+  d.forEach(r=>{
+    if(!r.name)return;
+    if(!peopleMap[r.name]){
+      peopleMap[r.name]={
+        name:r.name,role:r.role,country:r.country,
+        region:r.region,cluster:r.cluster,
+        morning:0,midday:0,eod:0,total:0
+      };
+    }
+    if(r.session==='Morning')peopleMap[r.name].morning++;
+    else if(r.session==='Midday')peopleMap[r.name].midday++;
+    else if(r.session==='EOD')peopleMap[r.name].eod++;
+    peopleMap[r.name].total++;
+  });
+
+  const people=Object.values(peopleMap);
+  const sessPerDay=sessionFilter?1:3;
+  const expPerPerson=sessPerDay*workingDays;
+  const expMorning=sessionFilter&&sessionFilter!=='Morning'?0:workingDays;
+  const expMidday=sessionFilter&&sessionFilter!=='Midday'?0:workingDays;
+  const expEOD=sessionFilter&&sessionFilter!=='EOD'?0:workingDays;
+
+  // Overall KPIs
+  const totalSubmitted=d.length;
+  const totalExpected=people.length*expPerPerson;
+  const overallComp=totalExpected>0?Math.min(100,Math.round(totalSubmitted/totalExpected*100)):0;
+
+  const morningSubmitted=d.filter(r=>r.session==='Morning').length;
+  const middaySubmitted=d.filter(r=>r.session==='Midday').length;
+  const eodSubmitted=d.filter(r=>r.session==='EOD').length;
+  const expM=people.length*(sessionFilter?0:1)*workingDays||(sessionFilter==='Morning'?people.length*workingDays:0);
+  const expMd=people.length*(sessionFilter?0:1)*workingDays||(sessionFilter==='Midday'?people.length*workingDays:0);
+  const expE=people.length*(sessionFilter?0:1)*workingDays||(sessionFilter==='EOD'?people.length*workingDays:0);
+
+  // Simpler per-session compliance
+  const mComp=sessionFilter===''||sessionFilter==='Morning'
+    ? (people.length*workingDays>0?Math.min(100,Math.round(morningSubmitted/(people.length*workingDays)*100)):0) : null;
+  const mdComp=sessionFilter===''||sessionFilter==='Midday'
+    ? (people.length*workingDays>0?Math.min(100,Math.round(middaySubmitted/(people.length*workingDays)*100)):0) : null;
+  const eComp=sessionFilter===''||sessionFilter==='EOD'
+    ? (people.length*workingDays>0?Math.min(100,Math.round(eodSubmitted/(people.length*workingDays)*100)):0) : null;
+
+  sv('comp_overall', overallComp+'%');
+  sv('comp_morning', mComp!==null ? mComp+'%' : 'N/A');
+  sv('comp_midday',  mdComp!==null ? mdComp+'%' : 'N/A');
+  sv('comp_eod',     eComp!==null ? eComp+'%' : 'N/A');
+  sv('comp_expected', totalExpected);
+  sv('comp_missing_count', Math.max(0, totalExpected-totalSubmitted));
+  sv('compTableCount', people.length);
+
+  // Sort by compliance % ascending (worst first — accountability)
+  people.sort((a,b)=>{
+    const ca=expPerPerson>0?a.total/expPerPerson:0;
+    const cb=expPerPerson>0?b.total/expPerPerson:0;
+    return ca-cb;
+  });
+
+  // Build a map of how many distinct clusters each person appears in (from full filtered data)
+  const personClusters={};
+  d.forEach(r=>{
+    if(!r.name)return;
+    if(!personClusters[r.name])personClusters[r.name]=new Set();
+    if(r.cluster)personClusters[r.name].add(r.cluster);
+  });
+
+  // Build a row for the table
+  function buildCompRow(p){
+    const pct=expPerPerson>0?Math.min(100,Math.round(p.total/expPerPerson*100)):0;
+    const mPct=workingDays>0?Math.min(100,Math.round(p.morning/workingDays*100)):0;
+    const mdPct=workingDays>0?Math.min(100,Math.round(p.midday/workingDays*100)):0;
+    const ePct=workingDays>0?Math.min(100,Math.round(p.eod/workingDays*100)):0;
+    const status=pct>=90?'🟢 Good':pct>=70?'🟡 At Risk':'🔴 Non-Compliant';
+    const showM=!sessionFilter||sessionFilter==='Morning';
+    const showMd=!sessionFilter||sessionFilter==='Midday';
+    const showE=!sessionFilter||sessionFilter==='EOD';
+    const roleClass={Agent:'ba',TL:'bt',RSM:'br',Trainer:'btr',Clerk:'bc'};
+    // Check actual data: if person submitted from more than 1 cluster → "Multiple"
+    const clusters=personClusters[p.name]||new Set();
+    const clusterVal=clusters.size>1
+      ? '<span style="color:#888;font-style:italic">Multiple</span>'
+      : clusters.size===1 ? [...clusters][0] : '-';
+    return `<tr>
+      <td style="font-weight:700">${p.name}</td>
+      <td><span class="badge ${roleClass[p.role]||''}">${p.role}</span></td>
+      <td>${p.region||'-'}</td>
+      <td>${clusterVal}</td>
+      <td style="text-align:center">${showM?compBadge(mPct):'—'}</td>
+      <td style="text-align:center">${showMd?compBadge(mdPct):'—'}</td>
+      <td style="text-align:center">${showE?compBadge(ePct):'—'}</td>
+      <td style="text-align:center;font-weight:700">${p.total}</td>
+      <td style="text-align:center;color:#888">${expPerPerson}</td>
+      <td style="text-align:center">${compBadge(pct)}</td>
+      <td style="text-align:center">${status}</td>
+    </tr>`;
+  }
+
+  const noData='<tr><td colspan="11" style="text-align:center;padding:20px;color:#888">No data for selected filters</td></tr>';
+
+  // Top 10 — best compliance first
+  const top10=[...people].sort((a,b)=>{
+    const ca=expPerPerson>0?a.total/expPerPerson:0;
+    const cb=expPerPerson>0?b.total/expPerPerson:0;
+    return cb-ca;
+  }).slice(0,10);
+
+  // Bottom 10 — worst compliance first (already sorted worst->best, just reverse slice)
+  const bottom10=people.slice(0,10); // people already sorted worst first
+
+  const topBody=document.getElementById('compTopBody');
+  const botBody=document.getElementById('compBottomBody');
+  if(topBody) topBody.innerHTML=top10.length?top10.map(buildCompRow).join(''):noData;
+  if(botBody) botBody.innerHTML=bottom10.length?bottom10.map(buildCompRow).join(''):noData;
+
+  // Chart: compliance % per person (worst first, red/amber/green)
+  const chartPeople=people.slice(0,20); // show worst 20
+  const pctData=chartPeople.map(p=>expPerPerson>0?Math.min(100,Math.round(p.total/expPerPerson*100)):0);
+  const barColors=pctData.map(v=>v>=90?'#22a63a':v>=70?'#F07020':'#c0392b');
+  mkChart('chartCompPerson','bar',
+    chartPeople.map(p=>p.name),
+    [{data:pctData,backgroundColor:barColors,borderRadius:6,label:'Compliance %'}],
+    {indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{max:100,ticks:{callback:v=>v+'%'}}}}
+  );
+
+  // Chart: compliance by region
+  const byRegion={};
+  people.forEach(p=>{
+    const reg=p.region||'Unknown';
+    if(!byRegion[reg])byRegion[reg]={total:0,exp:0};
+    byRegion[reg].total+=p.total;
+    byRegion[reg].exp+=expPerPerson;
+  });
+  const regEntries=Object.entries(byRegion).map(([r,v])=>([r,v.exp>0?Math.min(100,Math.round(v.total/v.exp*100)):0])).sort((a,b)=>a[1]-b[1]);
+  mkChart('chartCompRegion','bar',
+    regEntries.map(x=>x[0]),
+    [{data:regEntries.map(x=>x[1]),backgroundColor:regEntries.map(x=>x[1]>=90?'#22a63a':x[1]>=70?'#F07020':'#c0392b'),borderRadius:6}],
+    {scales:{y:{max:100,ticks:{callback:v=>v+'%'}}},plugins:{legend:{display:false}}}
+  );
+
+  // Chart: compliance by role
+  const byRole={};
+  people.forEach(p=>{
+    const role=p.role||'Unknown';
+    if(!byRole[role])byRole[role]={total:0,exp:0};
+    byRole[role].total+=p.total;
+    byRole[role].exp+=expPerPerson;
+  });
+  const roleEntries=Object.entries(byRole).map(([r,v])=>([r,v.exp>0?Math.min(100,Math.round(v.total/v.exp*100)):0])).sort((a,b)=>a[1]-b[1]);
+  mkChart('chartCompRole','bar',
+    roleEntries.map(x=>x[0]),
+    [{data:roleEntries.map(x=>x[1]),backgroundColor:roleEntries.map(x=>x[1]>=90?'#22a63a':x[1]>=70?'#F07020':'#c0392b'),borderRadius:6}],
+    {scales:{y:{max:100,ticks:{callback:v=>v+'%'}}},plugins:{legend:{display:false}}}
+  );
+}
+
+function exportComplianceCSV(){
+  const sessionFilter=document.getElementById('f_session')?.value||'';
+  const {workingDays}=getDateRange(filteredData);
+  const sessPerDay=sessionFilter?1:3;
+  const expPerPerson=sessPerDay*workingDays;
+  const peopleMap={};
+  filteredData.forEach(r=>{
+    if(!r.name)return;
+    if(!peopleMap[r.name])peopleMap[r.name]={name:r.name,role:r.role,country:r.country,region:r.region,cluster:r.cluster,morning:0,midday:0,eod:0,total:0};
+    if(r.session==='Morning')peopleMap[r.name].morning++;
+    else if(r.session==='Midday')peopleMap[r.name].midday++;
+    else if(r.session==='EOD')peopleMap[r.name].eod++;
+    peopleMap[r.name].total++;
+  });
+  const people=Object.values(peopleMap);
+  const rows=[['Name','Role','Country','Region','Cluster','Morning Submitted','Morning Expected','Morning %','Midday Submitted','Midday Expected','Midday %','EOD Submitted','EOD Expected','EOD %','Total Submitted','Total Expected','Compliance %','Status']];
+  people.forEach(p=>{
+    const pct=expPerPerson>0?Math.min(100,Math.round(p.total/expPerPerson*100)):0;
+    const mPct=workingDays>0?Math.min(100,Math.round(p.morning/workingDays*100)):0;
+    const mdPct=workingDays>0?Math.min(100,Math.round(p.midday/workingDays*100)):0;
+    const ePct=workingDays>0?Math.min(100,Math.round(p.eod/workingDays*100)):0;
+    const status=pct>=90?'Good':pct>=70?'At Risk':'Non-Compliant';
+    rows.push([p.name,p.role,p.country,p.region,p.cluster,p.morning,workingDays,mPct+'%',p.midday,workingDays,mdPct+'%',p.eod,workingDays,ePct+'%',p.total,expPerPerson,pct+'%',status]);
+  });
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='Compliance_Report.csv';a.click();
 }
 
 loadData();
