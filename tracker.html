@@ -202,7 +202,10 @@ small{font-size:12px;color:var(--muted);line-height:1.45}
 <header>
   <h1>🔥 Field Live Activities</h1>
   <p id="sessionText">Morning session is open</p>
-  <button class="admin-link" id="adminAccess" onclick="openPinModal()">Admin access</button>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+    <button class="admin-link" id="adminAccess" onclick="openPinModal()">Admin access</button>
+    <a href="https://flametrack.vercel.app/dashboard.html" target="_blank" style="font-size:12px;color:rgba(255,255,255,.85);background:rgba(255,255,255,.15);padding:5px 12px;border-radius:20px;text-decoration:none">📊 Dashboard →</a>
+  </div>
   <button class="admin-link hidden" id="logoutBtn" onclick="logoutAdmin()">Log out admin / back to user</button>
 </header>
 
@@ -225,7 +228,6 @@ small{font-size:12px;color:var(--muted);line-height:1.45}
 
   <div class="tabs">
     <button class="tab active" id="submitTab" onclick="setTab('submit')">Submit</button>
-    <button class="tab"        id="dashTab"   onclick="setTab('dash')">📊 Dashboard</button>
     <button class="tab hidden"  id="adminTab"  onclick="setTab('admin')">Admin</button>
   </div>
 
@@ -312,61 +314,6 @@ small{font-size:12px;color:var(--muted);line-height:1.45}
     </div>
 
   </div><!-- /submitPage -->
-  <!-- ── DASHBOARD PAGE ── -->
-  <div id="dashPage" class="hidden">
-
-    <div class="card">
-      <b>📊 Field Activity Dashboard</b>
-      <p class="small" style="margin-top:4px">Live summary of all submissions. Tap Refresh to get latest.</p>
-      <div style="display:flex;gap:8px;margin-top:10px">
-        <button class="btn primary" style="flex:1" onclick="loadDashboard()">🔄 Refresh</button>
-        <select id="dashFilter" onchange="loadDashboard()" style="flex:1;border:1.5px solid var(--border);border-radius:10px;padding:10px;font-size:13px;font-family:Arial;background:#fff">
-          <option value="all">All time</option>
-          <option value="today" selected>Today</option>
-          <option value="week">This week</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- KPI row -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-      <div class="kpi"><b id="dash_total" style="color:var(--or)">-</b><span>Total submissions</span></div>
-      <div class="kpi"><b id="dash_today" style="color:var(--or)">-</b><span>Today</span></div>
-      <div class="kpi"><b id="dash_agents" style="color:var(--or)">-</b><span>Active agents</span></div>
-      <div class="kpi"><b id="dash_clusters" style="color:var(--or)">-</b><span>Clusters covered</span></div>
-    </div>
-
-    <!-- Submissions by Role -->
-    <div class="card">
-      <b>👥 Submissions by Role</b>
-      <div id="dash_by_role" style="margin-top:10px"></div>
-    </div>
-
-    <!-- Submissions by Session -->
-    <div class="card">
-      <b>🕐 Submissions by Session</b>
-      <div id="dash_by_session" style="margin-top:10px"></div>
-    </div>
-
-    <!-- Submissions by Region -->
-    <div class="card">
-      <b>🌍 Submissions by Region</b>
-      <div id="dash_by_region" style="margin-top:10px"></div>
-    </div>
-
-    <!-- Top Clusters -->
-    <div class="card">
-      <b>📍 Top Clusters</b>
-      <div id="dash_by_cluster" style="margin-top:10px"></div>
-    </div>
-
-    <!-- Recent submissions -->
-    <div class="card">
-      <b>🕒 Recent Submissions</b>
-      <div id="dash_recent" style="margin-top:10px"></div>
-    </div>
-
-  </div><!-- /dashPage -->
 
 
   <!-- ── ADMIN PAGE ── -->
@@ -1246,13 +1193,10 @@ function setTab(t){
   if(t==='admin' && !isAdmin){ openPinModal(); return; }
   document.getElementById('submitTab').classList.toggle('active', t==='submit');
   document.getElementById('adminTab').classList.toggle('active',  t==='admin');
-  document.getElementById('dashTab').classList.toggle('active',   t==='dash');
   document.getElementById('submitPage').classList.toggle('hidden', t!=='submit');
   document.getElementById('adminPage').classList.toggle('hidden',  t!=='admin');
-  document.getElementById('dashPage').classList.toggle('hidden',   t!=='dash');
   document.querySelector('.bottom').classList.toggle('hidden', t!=='submit');
   if(t==='admin') { renderActivity(); refreshAdmin(); loadSessSettings(); }
-  if(t==='dash')  { loadDashboard(); }
 }
 
 function setRole(r, btn){
@@ -2825,89 +2769,6 @@ function updateMSLabel(key, placeholder='Select...'){
 //  DASHBOARD
 // ════════════════════════════════════════════
 
-function loadDashboard(){
-  const filter = document.getElementById('dashFilter')?.value || 'today';
-  const allRpts = reports();
-  const now = new Date();
-
-  // Filter by time
-  const filtered = allRpts.filter(r => {
-    const d = new Date(r.id);
-    if(filter==='today') return d.toDateString()===now.toDateString();
-    if(filter==='week'){
-      const weekAgo = new Date(now); weekAgo.setDate(now.getDate()-7);
-      return d >= weekAgo;
-    }
-    return true;
-  });
-
-  // KPIs
-  const uniqueAgents   = new Set(filtered.filter(r=>r.role==='Agent').map(r=>r.name)).size;
-  const uniqueClusters = new Set(filtered.map(r=>r.cluster).filter(Boolean)).size;
-  document.getElementById('dash_total').textContent    = allRpts.length;
-  document.getElementById('dash_today').textContent    = allRpts.filter(r=>new Date(r.id).toDateString()===now.toDateString()).length;
-  document.getElementById('dash_agents').textContent   = uniqueAgents;
-  document.getElementById('dash_clusters').textContent = uniqueClusters;
-
-  // By Role
-  const roles = ['Agent','TL','RSM','Trainer','Clerk'];
-  const roleCounts = {};
-  roles.forEach(r => roleCounts[r] = filtered.filter(x=>x.role===r).length);
-  const maxRole = Math.max(...Object.values(roleCounts), 1);
-  document.getElementById('dash_by_role').innerHTML = roles.map(r => `
-    <div class="dash-bar-wrap">
-      <div class="dash-bar-label"><span>${r}</span><span>${roleCounts[r]}</span></div>
-      <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${(roleCounts[r]/maxRole*100).toFixed(0)}%"></div></div>
-    </div>`).join('');
-
-  // By Session
-  const sessions = ['Morning','Midday','EOD'];
-  const sessCounts = {};
-  sessions.forEach(s => sessCounts[s] = filtered.filter(x=>x.session===s).length);
-  const maxSess = Math.max(...Object.values(sessCounts), 1);
-  const sessEmoji = {Morning:'🌅',Midday:'☀️',EOD:'🌆'};
-  document.getElementById('dash_by_session').innerHTML = sessions.map(s => `
-    <div class="dash-bar-wrap">
-      <div class="dash-bar-label"><span>${sessEmoji[s]} ${s}</span><span>${sessCounts[s]}</span></div>
-      <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${(sessCounts[s]/maxSess*100).toFixed(0)}%"></div></div>
-    </div>`).join('');
-
-  // By Region
-  const regionCounts = {};
-  filtered.forEach(r => { if(r.region){ regionCounts[r.region]=(regionCounts[r.region]||0)+1; }});
-  const sortedRegions = Object.entries(regionCounts).sort((a,b)=>b[1]-a[1]);
-  const maxReg = Math.max(...sortedRegions.map(x=>x[1]), 1);
-  document.getElementById('dash_by_region').innerHTML = sortedRegions.length
-    ? sortedRegions.map(([reg,cnt]) => `
-        <div class="dash-bar-wrap">
-          <div class="dash-bar-label"><span>${reg}</span><span>${cnt}</span></div>
-          <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${(cnt/maxReg*100).toFixed(0)}%"></div></div>
-        </div>`).join('')
-    : '<p class="small">No data for this period</p>';
-
-  // By Cluster (top 8)
-  const clusterCounts = {};
-  filtered.forEach(r => { if(r.cluster){ clusterCounts[r.cluster]=(clusterCounts[r.cluster]||0)+1; }});
-  const sortedClusters = Object.entries(clusterCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  const maxClust = Math.max(...sortedClusters.map(x=>x[1]), 1);
-  document.getElementById('dash_by_cluster').innerHTML = sortedClusters.length
-    ? sortedClusters.map(([cl,cnt]) => `
-        <div class="dash-bar-wrap">
-          <div class="dash-bar-label"><span>📍 ${cl}</span><span>${cnt}</span></div>
-          <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${(cnt/maxClust*100).toFixed(0)}%"></div></div>
-        </div>`).join('')
-    : '<p class="small">No data for this period</p>';
-
-  // Recent 5 submissions
-  const recent = filtered.slice().reverse().slice(0,5);
-  document.getElementById('dash_recent').innerHTML = recent.length
-    ? recent.map(r => `
-        <div class="dash-item">
-          <b>${r.name}</b> <span class="badge">${r.role} · ${r.session}</span>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">${r.cluster||''} · ${r.region||''} · ${r.submittedAt||''}</div>
-        </div>`).join('')
-    : '<p class="small">No submissions for this period</p>';
-}
 
 // ── START APP ──
 
