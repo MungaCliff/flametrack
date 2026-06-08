@@ -294,7 +294,7 @@ small{font-size:12px;color:var(--muted);line-height:1.45}
         <!-- Dynamic form section — rendered by renderDynamicForm() -->
         <div id="dynamicFormSection" style="margin-top:12px"></div>
         <div style="height:12px"></div>
-        <label>Key challenge today</label>
+        <label id="lbl_key_challenge">Key challenge today</label>
         <div id="keyChallengeBox"></div>
         <div id="challengeOtherWrap" class="hidden" style="margin-top:10px">
           <label>Specify other challenge</label>
@@ -951,6 +951,28 @@ function applyAppLang(lang){
   updateMSLabel('cascadeCluster', t.sel_cluster);
   // Re-render form questions in new language
   if(typeof renderDynamicForm === 'function') renderDynamicForm();
+  // Re-render key challenge dropdown with translated options
+  const challengeOpts = {
+    EN: ['None','Low foot traffic','Stock issue','Transport issue','Customer resistance','Competitor activity','Other'],
+    SW: ['Hakuna','Msongamano mdogo wa watu','Tatizo la stok','Tatizo la usafiri','Upinzani wa mteja','Shughuli za washindani','Kingine'],
+    PT: ['Nenhum','Pouco fluxo de clientes','Problema de stock','Problema de transporte','Resistência do cliente','Actividade da concorrência','Outro'],
+  };
+  const opts = challengeOpts[lang] || challengeOpts['EN'];
+  renderMultiSelect('keyChallengeBox','keyChallenge', opts, false, lang==='SW'?'Chagua changamoto':lang==='PT'?'Selecionar desafio':'Select challenge');
+  // Translate notes placeholder
+  const notesEl2 = document.getElementById('notes');
+  if(notesEl2) notesEl2.placeholder = t.notes_ph;
+  // Translate challenge other label
+  const coLbl = document.querySelector('#challengeOtherWrap label');
+  if(coLbl) coLbl.textContent = t.lbl_other_ch;
+  // Update static Key challenge label
+  const kclbl = document.getElementById('lbl_key_challenge');
+  if(kclbl) kclbl.textContent = t.lbl_challenge;
+  // Update General notes label
+  document.querySelectorAll('label').forEach(el => {
+    const txt = el.textContent.trim().toUpperCase();
+    if(['GENERAL NOTES','MAELEZO YA JUMLA','NOTAS GERAIS'].includes(txt)) el.textContent = t.lbl_notes;
+  });
 }
 
 
@@ -2379,7 +2401,13 @@ function getTranslatedQuestions(section){
 }
 
 function getQuestions(section){
-  // Check locally edited questions first (most recent changes)
+  // ALWAYS use translated questions when language is not English
+  // This takes priority over any cached/stored English questions
+  if(typeof appLang !== 'undefined' && appLang !== 'EN'){
+    const translated = getTranslatedQuestions(section);
+    if(translated && translated.length) return translated;
+  }
+  // English: check locally edited questions first
   const stored = localStorage.getItem(QM_KEY);
   if(stored){
     try{
