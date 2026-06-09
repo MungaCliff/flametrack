@@ -1265,8 +1265,15 @@ function loadNames(){
 
 function loadDropdowns(){
   const cfg2 = getConfig(), m = getMapping();
+  // Use translated challenge options based on current language
+  const chalOpts = {
+    EN: cfg2.challenges,
+    SW: ['Hakuna','Msongamano mdogo wa watu','Tatizo la stok','Tatizo la usafiri','Upinzani wa mteja','Shughuli za washindani','Kingine'],
+    PT: ['Nenhum','Pouco fluxo de clientes','Problema de stock','Problema de transporte','Resistência do cliente','Actividade da concorrência','Outro'],
+  };
+  const chalPh = appLang==='SW'?'Chagua changamoto':appLang==='PT'?'Selecionar desafio':'Select challenge';
   const currentName = firstMS('name');
-  renderMultiSelect('keyChallengeBox',   'keyChallenge',    cfg2.challenges,    false, 'Select challenge');
+  renderMultiSelect('keyChallengeBox','keyChallenge', chalOpts[appLang]||cfg2.challenges, false, chalPh);
   renderMultiSelect('agentDoneSoFarBox', 'agentDoneSoFar',  cfg2.doneSoFar,     true,  'Select all that apply');
   renderMultiSelect('agentBlockerBox',   'agentBlocker',    cfg2.blockers,      false, 'Select blocker');
   renderMultiSelect('agentCoachHeldBox', 'agentCoachHeld',  ['No','Yes'],    false, 'Select yes/no');
