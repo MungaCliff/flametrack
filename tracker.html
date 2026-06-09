@@ -769,7 +769,7 @@ function init(){
   const sessNames = {Morning:'Morning session', Midday:'Midday session', EOD:'EOD session', Closed:'Closed'};
   // Update session text immediately
   const st = document.getElementById('sessionText');
-  if(st) st.textContent = sessNames[session]+' session is open';
+  if(st) st.textContent = session+' session is open';
   document.getElementById('formTitle').textContent =
     session === 'EOD' ? 'Close of Day' : session;
   updateSessionPills();
@@ -1140,6 +1140,12 @@ function checkPin(){
   const pin = document.getElementById('pinInput').value;
   if(pin === getAdminPin()){
     closePinModal();
+    // Handle admin override for device lock
+    if(window._pendingOverride){
+      window._pendingOverride = false;
+      clearDeviceLock(session);
+      return;
+    }
     isAdmin = true;
     document.getElementById('adminTab').classList.remove('hidden');
     document.getElementById('identityCard').classList.add('hidden');
@@ -1691,53 +1697,27 @@ function updateRequiredLabels(){
 
 function submitReport(){
   const name = firstMS('name');
-  // Collect all dynamic form data
-  const dynamicData = getDynamicFormData();
-  Object.assign(r, dynamicData);
 
-  if(role==='Clerk' && session==='Morning'){
-    data.targetDemos   = document.getElementById('agentTargetDemos')?.value;
-    data.targetLeads   = document.getElementById('agentTargetLeads')?.value;
-    data.plan          = document.getElementById('agentPlan')?.value;
-  }
-  if(role==='Clerk' && session==='Midday'){
-    data.doneSoFar     = getMS('agentDoneSoFar');
-    data.blocker       = firstMS('agentBlocker');
-    data.middayDemos   = document.getElementById('agentMiddayDemos')?.value;
-  }
-  if(role==='Clerk' && session==='EOD'){
-    data.demos         = document.getElementById('clerkDemos')?.value;
-    data.leads         = document.getElementById('clerkLeads')?.value;
-    data.salesDone     = document.getElementById('clerkSales')?.value;
-    data.boiledWater   = firstMS('clerkBoiled');
-    data.trainedOn     = getMS('clerkTrained');
-    data.coachingHeld  = firstMS('clerkCoachHeld');
-    data.topics        = firstMS('clerkCoachHeld')==='Yes'?getMS('clerkTopics'):'';
-    data.firstInstallment = document.getElementById('clerkFirstInstallment')?.value;
-    data.challenge     = firstMS('clerkChallenge');
-  }
-  // No time restriction — always allow submission
-  if(!name)                  return alert('Please select your name first.');
+  // 1. Name required
+  if(!name) return alert('Please select your name first.');
 
-  // ── Validate required fields from Question Manager ──
+  // 2. Validate required fields
   const missing = validateDynamicForm();
   if(missing.length){
     alert('Please fill in required fields:\n\n• '+missing.join('\n• '));
     return;
   }
 
-  // Duplicate check — local records
+  // 3. Duplicate check
   const today = new Date().toDateString();
   const dup = reports().find(r=>r.name===name && r.session===session && new Date(r.id).toDateString()===today);
   if(dup){ if(!confirm('⚠️ You already submitted a '+session+' report today as '+name+'.\n\nSubmit again anyway?')) return; }
 
-  // Device lock check — blocks same device submitting again
+  // 4. Device lock check
   const deviceLock = isDeviceLocked(session);
-  if(deviceLock){
-    showDeviceLocked(deviceLock);
-    return;
-  }
+  if(deviceLock){ showDeviceLocked(deviceLock); return; }
 
+  // 5. Build report object
   const r = {
     id: Date.now(), locked: true,
     role, name, session,
@@ -1839,6 +1819,14 @@ function submitReport(){
     r.gap           = document.getElementById('rsmGap').value;
   }
 
+  // 6. Merge dynamic form data
+  const dynamicData = getDynamicFormData();
+  Object.assign(r, dynamicData);
+
+  // 7. Lock device for this session
+  lockDevice(session, name, role);
+
+  // 8. Save and post
   const all = reports(); all.push(r); saveReports(all);
   postToBackend(r); refreshAdmin();
   document.getElementById('formCard').classList.add('hidden');
