@@ -228,6 +228,7 @@ small{font-size:12px;color:var(--muted);line-height:1.45}
 
   <div class="tabs">
     <button class="tab active" id="submitTab" onclick="setTab('submit')">Submit</button>
+    <button class="tab"        id="dashTab"   onclick="setTab('dash')">📊 Dashboard</button>
     <button class="tab hidden"  id="adminTab"  onclick="setTab('admin')">Admin</button>
   </div>
 
@@ -314,6 +315,61 @@ small{font-size:12px;color:var(--muted);line-height:1.45}
     </div>
 
   </div><!-- /submitPage -->
+  <!-- ── DASHBOARD PAGE ── -->
+  <div id="dashPage" class="hidden">
+
+    <div class="card">
+      <b>📊 Field Activity Dashboard</b>
+      <p class="small" style="margin-top:4px">Live summary of all submissions. Tap Refresh to get latest.</p>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn primary" style="flex:1" onclick="loadDashboard()">🔄 Refresh</button>
+        <select id="dashFilter" onchange="loadDashboard()" style="flex:1;border:1.5px solid var(--border);border-radius:10px;padding:10px;font-size:13px;font-family:Arial;background:#fff">
+          <option value="all">All time</option>
+          <option value="today" selected>Today</option>
+          <option value="week">This week</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- KPI row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div class="kpi"><b id="dash_total" style="color:var(--or)">-</b><span>Total submissions</span></div>
+      <div class="kpi"><b id="dash_today" style="color:var(--or)">-</b><span>Today</span></div>
+      <div class="kpi"><b id="dash_agents" style="color:var(--or)">-</b><span>Active agents</span></div>
+      <div class="kpi"><b id="dash_clusters" style="color:var(--or)">-</b><span>Clusters covered</span></div>
+    </div>
+
+    <!-- Submissions by Role -->
+    <div class="card">
+      <b>👥 Submissions by Role</b>
+      <div id="dash_by_role" style="margin-top:10px"></div>
+    </div>
+
+    <!-- Submissions by Session -->
+    <div class="card">
+      <b>🕐 Submissions by Session</b>
+      <div id="dash_by_session" style="margin-top:10px"></div>
+    </div>
+
+    <!-- Submissions by Region -->
+    <div class="card">
+      <b>🌍 Submissions by Region</b>
+      <div id="dash_by_region" style="margin-top:10px"></div>
+    </div>
+
+    <!-- Top Clusters -->
+    <div class="card">
+      <b>📍 Top Clusters</b>
+      <div id="dash_by_cluster" style="margin-top:10px"></div>
+    </div>
+
+    <!-- Recent submissions -->
+    <div class="card">
+      <b>🕒 Recent Submissions</b>
+      <div id="dash_recent" style="margin-top:10px"></div>
+    </div>
+
+  </div><!-- /dashPage -->
 
 
   <!-- ── ADMIN PAGE ── -->
@@ -898,28 +954,6 @@ function applyAppLang(lang){
   updateMSLabel('cascadeCluster', t.sel_cluster);
   // Re-render form questions in new language
   if(typeof renderDynamicForm === 'function') renderDynamicForm();
-  // Re-render key challenge dropdown with translated options
-  const challengeOpts = {
-    EN: ['None','Low foot traffic','Stock issue','Transport issue','Customer resistance','Competitor activity','Other'],
-    SW: ['Hakuna','Msongamano mdogo wa watu','Tatizo la stok','Tatizo la usafiri','Upinzani wa mteja','Shughuli za washindani','Kingine'],
-    PT: ['Nenhum','Pouco fluxo de clientes','Problema de stock','Problema de transporte','Resistência do cliente','Actividade da concorrência','Outro'],
-  };
-  const opts = challengeOpts[lang] || challengeOpts['EN'];
-  renderMultiSelect('keyChallengeBox','keyChallenge', opts, false, lang==='SW'?'Chagua changamoto':lang==='PT'?'Selecionar desafio':'Select challenge');
-  // Translate notes placeholder
-  const notesEl2 = document.getElementById('notes');
-  if(notesEl2) notesEl2.placeholder = t.notes_ph;
-  // Translate challenge other label
-  const coLbl = document.querySelector('#challengeOtherWrap label');
-  if(coLbl) coLbl.textContent = t.lbl_other_ch;
-  // Update static Key challenge label
-  const kclbl = document.getElementById('lbl_key_challenge');
-  if(kclbl) kclbl.textContent = t.lbl_challenge;
-  // Update General notes label
-  document.querySelectorAll('label').forEach(el => {
-    const txt = el.textContent.trim().toUpperCase();
-    if(['GENERAL NOTES','MAELEZO YA JUMLA','NOTAS GERAIS'].includes(txt)) el.textContent = t.lbl_notes;
-  });
 }
 
 
@@ -1140,12 +1174,6 @@ function checkPin(){
   const pin = document.getElementById('pinInput').value;
   if(pin === getAdminPin()){
     closePinModal();
-    // Handle admin override for device lock
-    if(window._pendingOverride){
-      window._pendingOverride = false;
-      clearDeviceLock(session);
-      return;
-    }
     isAdmin = true;
     document.getElementById('adminTab').classList.remove('hidden');
     document.getElementById('identityCard').classList.add('hidden');
@@ -1199,15 +1227,18 @@ function setTab(t){
   if(t==='admin' && !isAdmin){ openPinModal(); return; }
   document.getElementById('submitTab').classList.toggle('active', t==='submit');
   document.getElementById('adminTab').classList.toggle('active',  t==='admin');
+  document.getElementById('dashTab').classList.toggle('active',   t==='dash');
   document.getElementById('submitPage').classList.toggle('hidden', t!=='submit');
   document.getElementById('adminPage').classList.toggle('hidden',  t!=='admin');
+  document.getElementById('dashPage').classList.toggle('hidden',   t!=='dash');
   document.querySelector('.bottom').classList.toggle('hidden', t!=='submit');
   if(t==='admin') { renderActivity(); refreshAdmin(); loadSessSettings(); }
+  if(t==='dash')  { loadDashboard(); }
 }
 
 function setRole(r, btn){
   role = r;
-  msValues.name = [];
+  msValues.name=[];msValues.cascadeCountry=[];msValues.cascadeRegion=[];msValues.cascadeCluster=[];
   document.querySelectorAll('.role').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   // Update name placeholder immediately
@@ -1223,73 +1254,6 @@ function setRole(r, btn){
 // ════════════════════════════════════════════
 //  NAMES & DROPDOWNS
 // ════════════════════════════════════════════
-
-// ════════════════════════════════════════════
-//  CASCADE: Country → Region → Cluster → Name
-// ════════════════════════════════════════════
-function roleNameField(r){
-  if(r==='Agent')return 'AgentName';
-  if(r==='TL')return 'TLName';
-  if(r==='Trainer')return 'TrainerName';
-  if(r==='Clerk')return 'ClerkName';
-  return 'RSMName';
-}
-function loadCascadeCountry(){
-  const m=getMapping();
-  const countries=[...new Set(m.map(x=>x.Country).filter(Boolean))].sort();
-  renderMultiSelect('countrySelectBox','cascadeCountry',countries,false,'Select country');
-  document.getElementById('regionRow').classList.add('hidden');
-  document.getElementById('clusterRow').classList.add('hidden');
-  document.getElementById('nameRow').classList.add('hidden');
-  document.getElementById('cascadeNotice').classList.remove('hidden');
-  msValues.cascadeRegion=[];msValues.cascadeCluster=[];msValues.name=[];
-}
-function onCascadeCountry(){
-  const country=firstMS('cascadeCountry');
-  if(!country){
-    document.getElementById('regionRow').classList.add('hidden');
-    document.getElementById('clusterRow').classList.add('hidden');
-    document.getElementById('nameRow').classList.add('hidden');
-    return;
-  }
-  const m=getMapping();
-  const regions=[...new Set(m.filter(x=>x.Country===country).map(x=>x.Region).filter(Boolean))].sort();
-  renderMultiSelect('regionSelectBox','cascadeRegion',regions,false,'Select region');
-  document.getElementById('regionRow').classList.remove('hidden');
-  document.getElementById('clusterRow').classList.add('hidden');
-  document.getElementById('nameRow').classList.add('hidden');
-  msValues.cascadeRegion=[];msValues.cascadeCluster=[];msValues.name=[];
-}
-function onCascadeRegion(){
-  const country=firstMS('cascadeCountry');
-  const region=firstMS('cascadeRegion');
-  if(!region){document.getElementById('clusterRow').classList.add('hidden');document.getElementById('nameRow').classList.add('hidden');return;}
-  const m=getMapping();
-  const clusters=[...new Set(m.filter(x=>x.Country===country&&x.Region===region).map(x=>x.Cluster).filter(Boolean))].sort();
-  renderMultiSelect('clusterCascadeBox','cascadeCluster',clusters,false,'Select cluster');
-  document.getElementById('clusterRow').classList.remove('hidden');
-  document.getElementById('nameRow').classList.add('hidden');
-  msValues.cascadeCluster=[];msValues.name=[];
-}
-function onCascadeCluster(){
-  const country=firstMS('cascadeCountry');
-  const region=firstMS('cascadeRegion');
-  const cluster=firstMS('cascadeCluster');
-  if(!cluster){document.getElementById('nameRow').classList.add('hidden');return;}
-  const m=getMapping();
-  const nameField=roleNameField(role);
-  const names=[...new Set(m.filter(x=>x.Country===country&&x.Region===region&&x.Cluster===cluster).map(x=>x[nameField]).filter(Boolean))].sort();
-  renderMultiSelect('nameSelectBox','name',names,false,'Select '+role+' name');
-  document.getElementById('nameRow').classList.remove('hidden');
-  document.getElementById('cascadeNotice').classList.add('hidden');
-  const countryEl=document.getElementById('country');if(countryEl)countryEl.value=country;
-  const regionEl=document.getElementById('region');if(regionEl)regionEl.value=region;
-  msValues.clusterSelect=[cluster];updateMSLabel('clusterSelect','Select cluster');
-  afterNameSelected();
-}
-function loadNames(){ loadCascadeCountry(); }
-
-
 function roleNames(r){
   const m = getMapping();
   if(r==='Agent')   return [...new Set(m.map(x=>x.AgentName).filter(Boolean))];
@@ -1495,21 +1459,18 @@ function validateDynamicForm(){
 //  AFTER NAME SELECTED — show right questions
 // ════════════════════════════════════════════
 function afterNameSelected(){
-  const name = firstMS('name'), has = !!name;
-  document.getElementById('needName').classList.toggle('hidden', has);
-  document.getElementById('dynamicForm').classList.toggle('hidden', !has);
-  if(!has) return;
-
-  // Pre-fill country/region/cluster from mapping
-  const m = getMapping().find(x=>x.AgentName===name||x.TLName===name||x.RSMName===name||x.TrainerName===name||x.ClerkName===name);
-  if(m){
-    document.getElementById('country').value = m.Country || '';
-    document.getElementById('region').value  = m.Region  || '';
-    msValues.clusterSelect = [m.Cluster || ''];
-    updateMSLabel('clusterSelect', 'Select cluster');
-  }
+  const name=firstMS('name'),has=!!name;
+  document.getElementById('needName').classList.toggle('hidden',has);
+  document.getElementById('dynamicForm').classList.toggle('hidden',!has);
+  if(!has)return;
+  // Use cascade values
+  const country=firstMS('cascadeCountry')||'';
+  const region=firstMS('cascadeRegion')||'';
+  const cluster=firstMS('cascadeCluster')||'';
+  const ce=document.getElementById('country');if(ce)ce.value=country;
+  const re=document.getElementById('region');if(re)re.value=region;
+  msValues.clusterSelect=[cluster];updateMSLabel('clusterSelect','Select cluster');
   loadDropdowns();
-  // Render questions dynamically from Question Manager
   renderDynamicForm();
 }
 
@@ -1704,131 +1665,42 @@ function submitReport(){
   // 2. Validate required fields
   const missing = validateDynamicForm();
   if(missing.length){
-    alert('Please fill in required fields:\n\n• '+missing.join('\n• '));
+    alert('Please fill in required fields:\n\n\u2022 '+missing.join('\n\u2022 '));
     return;
   }
 
   // 3. Duplicate check
   const today = new Date().toDateString();
-  const dup = reports().find(r=>r.name===name && r.session===session && new Date(r.id).toDateString()===today);
-  if(dup){ if(!confirm('⚠️ You already submitted a '+session+' report today as '+name+'.\n\nSubmit again anyway?')) return; }
+  const existing = reports().find(x=>x.name===name&&x.session===session&&new Date(x.id).toDateString()===today);
+  if(existing){if(!confirm('Already submitted '+session+' today as '+name+'. Submit again?'))return;}
 
   // 4. Device lock check
   const deviceLock = isDeviceLocked(session);
-  if(deviceLock){ showDeviceLocked(deviceLock); return; }
+  if(deviceLock){showDeviceLocked(deviceLock);return;}
 
-  // 5. Build report object
+  // 5. Build report
   const r = {
-    id: Date.now(), locked: true,
-    role, name, session,
-    country:     document.getElementById('country').value,
-    region:      document.getElementById('region').value,
-    cluster:     firstMS('clusterSelect'),
-    gpsLat:      geo.lat, gpsLng: geo.lng,
-    gpsAccuracy: geo.acc, gpsWard: geo.ward,
-    gpsAddress:  geo.address,
-    notes:       document.getElementById('notes').value,
-    challenge:   firstMS('keyChallenge')==='Other' ? document.getElementById('challengeOther').value : firstMS('keyChallenge'),
+    id: Date.now(), locked: true, role, name, session,
+    country:     document.getElementById('country')?.value || firstMS('cascadeCountry') || '',
+    region:      document.getElementById('region')?.value  || firstMS('cascadeRegion')  || '',
+    cluster:     firstMS('clusterSelect') || firstMS('cascadeCluster') || '',
+    gpsLat: geo.lat, gpsLng: geo.lng, gpsAccuracy: geo.acc, gpsWard: geo.ward, gpsAddress: geo.address,
+    notes:       document.getElementById('notes')?.value || '',
+    challenge:   firstMS('keyChallenge')==='Other'?(document.getElementById('challengeOther')?.value||''):firstMS('keyChallenge'),
     submittedAt: new Date().toLocaleString(),
   };
 
-  if(role==='Agent' && session==='Morning'){
-    r.targetDemos = document.getElementById('agentTargetDemos').value;
-    r.targetLeads = document.getElementById('agentTargetLeads').value;
-    r.plan        = document.getElementById('agentPlan').value;
-  }
-  if(role==='Agent' && session==='Midday'){
-    r.doneSoFar   = getMS('agentDoneSoFar');
-    r.blocker     = firstMS('agentBlocker');
-    r.middayDemos = document.getElementById('agentMiddayDemos').value;
-  }
-  if(role==='Agent' && session==='EOD'){
-    r.demos        = document.getElementById('agentDemos').value;
-    r.leadsToday   = document.getElementById('agentLeads').value;
-    r.idcSold      = document.getElementById('agentSold').value;
-    r.idcPots      = document.getElementById('agentStock').value;
-    r.coachingHeld = firstMS('agentCoachHeld');
-    r.topics       = firstMS('agentCoachHeld')==='Yes' ? getMS('agentTopics') : '';
-  }
-  if(role==='TL' && session==='Morning'){
-    r.agentsToday      = getMS('tlAgents');
-    r.focus            = firstMS('tlFocus');
-    r.targetToday      = document.getElementById('tlTargetToday')?.value;
-    r.plannedClusters  = document.getElementById('tlPlannedClusters')?.value;
-  }
-  if(role==='TL' && session==='Midday'){
-    r.doneSoFar        = getMS('tlDoneSoFar');
-    r.blocker          = firstMS('tlBlocker');
-    r.supportNeeded    = firstMS('tlSupport');
-    r.middaySold       = document.getElementById('tlMiddaySold')?.value;
-  }
-  if(role==='TL' && session==='EOD'){
-    r.agents       = getMS('tlAgentsEod') || getMS('tlAgents');
-    r.demoLocation = getMS('tlDemoLocations');
-    r.coachingHeld = firstMS('tlCoachHeld');
-    r.topics       = firstMS('tlCoachHeld')==='Yes' ? getMS('tlTopics') : '';
-    r.idcPots      = document.getElementById('tlStock').value;
-    r.idcOpening   = document.getElementById('tlOpen').value;
-    r.idcClosing   = document.getElementById('tlClose').value;
-  }
-  if(role==='Trainer' && session==='Morning'){
-    r.sessionType      = firstMS('trainerSessionType');
-    r.agentsToTrain    = getMS('trainerAgentsMorning');
-    r.topicsPlanned    = getMS('trainerTopicsMorning');
-    r.targetToday      = document.getElementById('trainerTargetToday')?.value;
-  }
-  if(role==='Trainer' && session==='Midday'){
-    r.doneSoFar        = getMS('trainerDoneSoFar');
-    r.blocker          = firstMS('trainerBlocker');
-    r.middayCount      = document.getElementById('trainerMiddayCount')?.value;
-    r.middayNotes      = document.getElementById('trainerMiddayNotes')?.value;
-  }
-  if(role==='Trainer' && session==='EOD'){
-    r.sessionType     = firstMS('trainerSessionType');
-    r.agentsTrained   = getMS('trainerAgents');
-    r.trainingTopics  = getMS('trainerTopics');
-    r.productScore    = document.getElementById('trainerProductScore')?.value;
-    r.conversionDiscussed = firstMS('trainerConversion');
-    r.conversionRate  = document.getElementById('trainerConvRate')?.value;
-    r.repayDiscussed  = firstMS('trainerRepay');
-    r.repayRate       = document.getElementById('trainerRepayRate')?.value;
-    r.usageRate       = document.getElementById('trainerUsageRate')?.value;
-    r.policyTopics    = getMS('trainerPolicy');
-    r.passCount       = document.getElementById('trainerPassCount')?.value;
-    r.trainerGap      = document.getElementById('trainerGap')?.value;
-    r.trainerAction   = document.getElementById('trainerAction')?.value;
-  }
-  if(role==='RSM' && session==='Morning'){
-    r.tlsToday         = getMS('rsmTLs');
-    r.focus            = firstMS('rsmFocus');
-    r.clustersToVisit  = getMS('rsmClusters');
-    r.targetToday      = document.getElementById('rsmTargetToday')?.value;
-  }
-  if(role==='RSM' && session==='Midday'){
-    r.doneSoFar        = getMS('rsmDoneSoFar');
-    r.blocker          = firstMS('rsmBlocker');
-    r.supportNeeded    = firstMS('rsmSupport');
-    r.middaySold       = document.getElementById('rsmMiddaySold')?.value;
-  }
-  if(role==='RSM' && session==='EOD'){
-    r.tls           = getMS('rsmTLsEod');
-    r.clustersVisited = getMS('rsmClusters');
-    r.demoLocation  = getMS('rsmDemoLocations');
-    r.coachingHeld  = firstMS('rsmCoachHeld');
-    r.topics        = firstMS('rsmCoachHeld')==='Yes' ? getMS('rsmTopics') : '';
-    r.gap           = document.getElementById('rsmGap').value;
-  }
-
   // 6. Merge dynamic form data
-  const dynamicData = getDynamicFormData();
-  Object.assign(r, dynamicData);
+  Object.assign(r, getDynamicFormData());
 
-  // 7. Lock device for this session
+  // 7. Lock device
   lockDevice(session, name, role);
 
   // 8. Save and post
   const all = reports(); all.push(r); saveReports(all);
   postToBackend(r); refreshAdmin();
+
+  // 9. Show success
   document.getElementById('formCard').classList.add('hidden');
   document.getElementById('successCard').classList.remove('hidden');
   document.querySelector('.bottom').classList.add('hidden');
@@ -1964,6 +1836,54 @@ const QM_KEY = 'fla_questions_v4'; // v4 — all roles have 3 sessions, Clerk ad
 const QM_SECTIONS = ['agent-morning','agent-midday','agent-eod','tl-morning','tl-midday','tl-eod','rsm-morning','rsm-midday','rsm-eod','trainer-morning','trainer-midday','trainer-eod','clerk-morning','clerk-midday','clerk-eod'];
 
 // Default built-in questions per section
+// ════════════════════════════════════════════
+//  TRANSLATED QUESTIONS — SW (Kiswahili)
+// ════════════════════════════════════════════
+const QUESTIONS_SW = {
+  'agent-morning':[{id:'am1',label:'Lengo lako la uanzishaji leo?',type:'number',required:true},{id:'am2',label:'Lengo la wateja wanaowezekana leo?',type:'number',required:true},{id:'am3',label:'Eneo / njia uliyopanga leo?',type:'textarea',required:false},{id:'am4',label:'Nini kinaweza kuathiri utendaji wako leo?',type:'text',required:false},{id:'am5',label:'Je, una demo IDC?',type:'yesno',required:true},{id:'am6',label:'Unahitaji msaada gani leo?',type:'textarea',required:false}],
+  'agent-midday':[{id:'md1',label:'Wateja wanaowezekana wangapi hadi sasa?',type:'number',required:false},{id:'md2',label:'Kuna kizuizi chochote sasa hivi?',type:'select',required:true,options:['Hakuna kizuizi','Usafiri','Hakuna stok','Hakuna wateja','Kingine']},{id:'md3',label:'Maonyesho mangapi yamefanywa hadi sasa?',type:'number',required:false},{id:'md4',label:'Je, ulibadilisha mpango wa njia ya asubuhi?',type:'yesno',required:false}],
+  'agent-eod':[{id:'ae1',label:'Jumla ya maonyesho yaliyofanywa leo?',type:'number',required:true},{id:'ae2',label:'Wateja wanaowezekana wangapi walizalishwa leo?',type:'number',required:false},{id:'ae3',label:'Je, mafunzo ya mara kwa mara yalifanyika?',type:'yesno',required:false},{id:'ae4',label:'Mada ilikuwa nini?',type:'multiselect',required:false,options:[]},{id:'ae5',label:'Changamoto kuu leo',type:'select',required:false,options:[]}],
+  'tl-morning':[{id:'tlm1',label:'Mawakala wangapi wanafanya kazi uwanjani leo?',type:'number',required:true},{id:'tlm2',label:'Utafanya maonyesho wapi leo?',type:'text',required:false},{id:'tlm3',label:'Lengo la timu leo (vitengo vya IC)',type:'number',required:false},{id:'tlm4',label:'Vikundi vilivyopangwa kutembelewa',type:'text',required:false}],
+  'tl-midday':[{id:'tlmd1',label:'Imefanyika hadi sasa (chagua yote)',type:'multiselect',required:false,options:['Kitembelea kikundi','Maonyesho yamefanyika','Mawakala wamefunzwa','Hesabu ya stok imefanywa','Bado hakuna']},{id:'tlmd2',label:'Kuna kizuizi chochote sasa hivi?',type:'select',required:true,options:['Hakuna kizuizi','Usafiri','Wakala hayupo','Hakuna stok','Kingine']},{id:'tlmd3',label:'Unahitaji msaada wa RSM?',type:'yesno',required:false},{id:'tlmd4',label:'Vitengo vya IC vilivyouzwa na timu hadi sasa',type:'number',required:false}],
+  'tl-eod':[{id:'tle1',label:'Mawakala wangapi wanafanya kazi uwanjani leo?',type:'number',required:true},{id:'tle2',label:'Ulifanya maonyesho wapi leo?',type:'text',required:false},{id:'tle3',label:'Je, kikao cha mafunzo kilifanyika leo?',type:'yesno',required:false},{id:'tle4',label:'Mada zilizoshughulikiwa',type:'multiselect',required:false,options:[]},{id:'tle5',label:'IDC / vyungu vya kuuza vingapi viko kikundini?',type:'text',required:false},{id:'tle6',label:'IDC ya ufunguzi',type:'number',required:false},{id:'tle7',label:'IDC ya kufunga',type:'number',required:false},{id:'tle8',label:'Changamoto kuu leo',type:'select',required:false,options:[]},{id:'tle9',label:'Wateja wangapi walitembelea leo kwa RE/Matumizi?',type:'number',required:false}],
+  'rsm-morning':[{id:'rsmm1',label:'Viongozi wa Timu wanaofuatana leo',type:'multiselect',required:false,options:[]},{id:'rsmm2',label:'Lengo kuu leo',type:'select',required:false,options:['Kufunza VT','Ukaguzi wa kikundi','Ukaguzi wa stok','Kutatua matatizo','Ziara ya soko']},{id:'rsmm3',label:'Vikundi vya kutembelea leo',type:'multiselect',required:false,options:[]},{id:'rsmm4',label:'Lengo la timu leo (vitengo vya IC)',type:'number',required:false}],
+  'rsm-midday':[{id:'rsmmd1',label:'Imefanyika hadi sasa (chagua yote)',type:'multiselect',required:false,options:['Kitembelea VT','Kitembelea kikundi','Mafunzo yamefanyika','Ukaguzi wa stok','Bado hakuna']},{id:'rsmmd2',label:'Kuna kizuizi chochote sasa hivi?',type:'select',required:true,options:['Hakuna kizuizi','Usafiri','VT hayupo','Tatizo la soko','Kingine']},{id:'rsmmd3',label:'Unahitaji msaada wa Makao Makuu?',type:'yesno',required:false},{id:'rsmmd4',label:'Vitengo vya IC vilivyouzwa na timu hadi sasa',type:'number',required:false}],
+  'rsm-eod':[{id:'rsme1',label:'Wakala/VT gani waliofunzwa/kufuatana leo?',type:'multiselect',required:false,options:[]},{id:'rsme2',label:'Vikundi vipi vilivyotembelewa leo?',type:'multiselect',required:false,options:[]},{id:'rsme3',label:'Mahali pa maonyesho leo',type:'multiselect',required:false,options:[]},{id:'rsme4',label:'Je, kikao cha mafunzo kilifanyika leo?',type:'yesno',required:false},{id:'rsme5',label:'Mada zilizoshughulikiwa',type:'multiselect',required:false,options:[]},{id:'rsme6',label:'Pengo kubwa lililoonekana',type:'textarea',required:false},{id:'rsme7',label:'Changamoto kuu leo',type:'select',required:false,options:[]},{id:'rsme8',label:'Wateja wangapi walitembelea leo kwa RE/Matumizi?',type:'number',required:false}],
+  'trainer-morning':[{id:'trm1',label:'Aina ya kikao cha mafunzo leo',type:'multiselect',required:true,options:['Mafunzo darasani','Ziara ya uwanjani','Mafunzo binafsi','Warsha ya kikundi','Tathmini/mtihani','Mafunzo ya marudio']},{id:'trm2',label:'Mawakala wa kufunza leo',type:'multiselect',required:true,options:[]},{id:'trm3',label:'Mada zilizopangwa leo',type:'multiselect',required:false,options:[]},{id:'trm4',label:'Lengo la mafunzo (mawakala wa kukamilisha)',type:'number',required:false}],
+  'trainer-midday':[{id:'trmd1',label:'Imefanyika hadi sasa (chagua yote)',type:'multiselect',required:false,options:['Utangulizi umekamilika','Maarifa ya bidhaa yameshughulikiwa','Mazoezi ya maonyesho yamefanywa','Tathmini imeanza','Bado hakuna']},{id:'trmd2',label:'Kuna kizuizi chochote sasa hivi?',type:'select',required:false,options:['Hakuna kizuizi','Mawakala hawakuja','Tatizo la mahali','Vifaa vimekosekana','Kingine']},{id:'trmd3',label:'Mawakala waliokamilisha mafunzo hadi sasa',type:'number',required:false},{id:'trmd4',label:'Uchunguzi wa mapema / matatizo',type:'textarea',required:false}],
+  'trainer-eod':[{id:'tre1',label:'Aina ya kikao cha mafunzo kilichofanyika leo?',type:'multiselect',required:true,options:['Mafunzo darasani','Ziara ya uwanjani','Mafunzo binafsi','Warsha ya kikundi','Tathmini/mtihani','Mafunzo ya marudio']},{id:'tre2',label:'Mawakala waliofunzwa leo?',type:'multiselect',required:true,options:[]},{id:'tre3',label:'Mada za mafunzo zilizoshughulikiwa?',type:'multiselect',required:true,options:[]},{id:'tre4',label:'Wastani wa alama za maarifa ya bidhaa (1-10)',type:'number',required:true},{id:'tre5',label:'Je, ulijadili ubadilishaji wa wateja hadi mauzo leo?',type:'yesno',required:false},{id:'tre6',label:'Idadi ya mawakala waliofaulu tathmini?',type:'number',required:false},{id:'tre7',label:'Pengo kuu lililoonekana kwa mawakala leo?',type:'textarea',required:true},{id:'tre8',label:'Mpango wa utekelezaji kwa kikao cha mafunzo kijacho',type:'textarea',required:true},{id:'tre9',label:'Ufanisi wa jumla wa mafunzo (1-10)?',type:'number',required:false},{id:'tre10',label:'Je, uanzishaji wa wakala mpya ulifanyika leo?',type:'yesno',required:false},{id:'tre11',label:'Orodhesha mawakala wote waliowekwa leo',type:'textarea',required:false}],
+  'clerk-morning':[{id:'ckm1',label:'Lengo lako la uanzishaji leo?',type:'number',required:true},{id:'ckm2',label:'Lengo la wateja wanaowezekana leo?',type:'number',required:true},{id:'ckm3',label:'Eneo / njia uliyopanga leo?',type:'textarea',required:false},{id:'ckm4',label:'Nini kinaweza kuathiri utendaji wako leo?',type:'text',required:false},{id:'ckm5',label:'Je, una demo IDC?',type:'yesno',required:true},{id:'ckm6',label:'Unahitaji msaada gani leo?',type:'textarea',required:false}],
+  'clerk-midday':[{id:'ckmd1',label:'Wateja wanaowezekana wangapi hadi sasa?',type:'number',required:false},{id:'ckmd2',label:'Kuna kizuizi chochote sasa hivi?',type:'select',required:true,options:['Hakuna kizuizi','Usafiri','Hakuna stok','Hakuna wateja','Kingine']},{id:'ckmd3',label:'Maonyesho mangapi yamefanywa hadi sasa?',type:'number',required:false},{id:'ckmd4',label:'Je, ulibadilisha mpango wa njia ya asubuhi?',type:'yesno',required:false}],
+  'clerk-eod':[{id:'cke1',label:'Jumla ya maonyesho yaliyofanywa leo?',type:'number',required:true},{id:'cke2',label:'Wateja wanaowezekana wangapi walizalishwa leo?',type:'number',required:false},{id:'cke3',label:'Mauzo mangapi yamefanywa leo?',type:'number',required:true},{id:'cke4',label:'Je, ulipika maji / kupika?',type:'yesno',required:true},{id:'cke5',label:'Umefunza wateja kuhusu nini?',type:'multiselect',required:true,options:['Matumizi','Malipo','Dhamana','Masharti ya mkataba','Programu ya eCoa ya Mteja']},{id:'cke6',label:'Je, mafunzo ya mara kwa mara yalifanyika?',type:'yesno',required:false},{id:'cke7',label:'Mada ilikuwa nini?',type:'multiselect',required:false,options:[]},{id:'cke8',label:'Wateja wangapi walifanya malipo ya kwanza?',type:'number',required:false},{id:'cke9',label:'Changamoto kuu leo',type:'select',required:false,options:[]}],
+};
+
+// ════════════════════════════════════════════
+//  TRANSLATED QUESTIONS — PT (Português)
+// ════════════════════════════════════════════
+const QUESTIONS_PT = {
+  'agent-morning':[{id:'am1',label:'Meta de activação de hoje?',type:'number',required:true},{id:'am2',label:'Meta de leads para hoje?',type:'number',required:true},{id:'am3',label:'Área / rota planeada para hoje?',type:'textarea',required:false},{id:'am4',label:'O que pode afectar o seu desempenho hoje?',type:'text',required:false},{id:'am5',label:'Tem um IDC de demonstração?',type:'yesno',required:true},{id:'am6',label:'Que apoio precisa hoje?',type:'textarea',required:false}],
+  'agent-midday':[{id:'md1',label:'Quantos leads obtidos até agora?',type:'number',required:false},{id:'md2',label:'Há algum obstáculo agora?',type:'select',required:true,options:['Sem obstáculo','Transporte','Sem stock','Sem clientes','Outro']},{id:'md3',label:'Quantas demonstrações feitas até agora?',type:'number',required:false},{id:'md4',label:'Mudou o plano de rota da manhã?',type:'yesno',required:false}],
+  'agent-eod':[{id:'ae1',label:'Total de demonstrações feitas hoje?',type:'number',required:true},{id:'ae2',label:'Quantos leads gerados hoje?',type:'number',required:false},{id:'ae3',label:'Foi feito coaching?',type:'yesno',required:false},{id:'ae4',label:'Qual foi o tema?',type:'multiselect',required:false,options:[]},{id:'ae5',label:'Principal desafio hoje',type:'select',required:false,options:[]}],
+  'tl-morning':[{id:'tlm1',label:'Quantos agentes estão activos no campo hoje?',type:'number',required:true},{id:'tlm2',label:'Onde vai fazer demonstrações hoje?',type:'text',required:false},{id:'tlm3',label:'Meta da equipa para hoje (unidades IC)',type:'number',required:false},{id:'tlm4',label:'Clusters planeados para visitar',type:'text',required:false}],
+  'tl-midday':[{id:'tlmd1',label:'Feito até agora (seleccionar tudo)',type:'multiselect',required:false,options:['Visitou cluster','Fez demonstrações','Treinou agentes','Contagem de stock feita','Nada ainda']},{id:'tlmd2',label:'Há algum obstáculo agora?',type:'select',required:true,options:['Sem obstáculo','Transporte','Agente ausente','Sem stock','Outro']},{id:'tlmd3',label:'Precisa de apoio do RSM?',type:'yesno',required:false},{id:'tlmd4',label:'Unidades IC vendidas pela equipa até agora',type:'number',required:false}],
+  'tl-eod':[{id:'tle1',label:'Quantos agentes estão activos no campo hoje?',type:'number',required:true},{id:'tle2',label:'Onde fez demonstrações hoje?',type:'text',required:false},{id:'tle3',label:'Foi realizada uma sessão de coaching hoje?',type:'yesno',required:false},{id:'tle4',label:'Temas abordados',type:'multiselect',required:false,options:[]},{id:'tle5',label:'Quantos IDCs / panelas à venda no cluster?',type:'text',required:false},{id:'tle6',label:'IDC abertura',type:'number',required:false},{id:'tle7',label:'IDC fecho',type:'number',required:false},{id:'tle8',label:'Principal desafio hoje',type:'select',required:false,options:[]},{id:'tle9',label:'Quantos clientes visitaram hoje para RE/Utilização?',type:'number',required:false}],
+  'rsm-morning':[{id:'rsmm1',label:'Líderes de equipa a acompanhar hoje',type:'multiselect',required:false,options:[]},{id:'rsmm2',label:'Foco principal hoje',type:'select',required:false,options:['Treinar LEs','Auditoria de cluster','Verificação de stock','Resolver problemas','Visita ao mercado']},{id:'rsmm3',label:'Clusters a visitar hoje',type:'multiselect',required:false,options:[]},{id:'rsmm4',label:'Meta da equipa para hoje (unidades IC)',type:'number',required:false}],
+  'rsm-midday':[{id:'rsmmd1',label:'Feito até agora (seleccionar tudo)',type:'multiselect',required:false,options:['Visitou LE','Visitou cluster','Coaching feito','Verificação de stock','Nada ainda']},{id:'rsmmd2',label:'Há algum obstáculo agora?',type:'select',required:true,options:['Sem obstáculo','Transporte','LE ausente','Problema de mercado','Outro']},{id:'rsmmd3',label:'Precisa de apoio da sede?',type:'yesno',required:false},{id:'rsmmd4',label:'Unidades IC vendidas pela equipa até agora',type:'number',required:false}],
+  'rsm-eod':[{id:'rsme1',label:'Que Agente/LE foi treinado/acompanhado hoje?',type:'multiselect',required:false,options:[]},{id:'rsme2',label:'Que clusters foram visitados hoje?',type:'multiselect',required:false,options:[]},{id:'rsme3',label:'Local de demonstração hoje',type:'multiselect',required:false,options:[]},{id:'rsme4',label:'Foi realizada uma sessão de coaching hoje?',type:'yesno',required:false},{id:'rsme5',label:'Temas abordados',type:'multiselect',required:false,options:[]},{id:'rsme6',label:'Maior lacuna encontrada',type:'textarea',required:false},{id:'rsme7',label:'Principal desafio hoje',type:'select',required:false,options:[]},{id:'rsme8',label:'Quantos clientes visitaram hoje para RE/Utilização?',type:'number',required:false}],
+  'trainer-morning':[{id:'trm1',label:'Tipo de sessão de formação hoje',type:'multiselect',required:true,options:['Formação em sala','Acompanhamento no campo','Coaching individual','Workshop em grupo','Avaliação/teste','Formação de actualização']},{id:'trm2',label:'Agentes a formar hoje',type:'multiselect',required:true,options:[]},{id:'trm3',label:'Temas planeados para hoje',type:'multiselect',required:false,options:[]},{id:'trm4',label:'Meta de formação (agentes a completar)',type:'number',required:false}],
+  'trainer-midday':[{id:'trmd1',label:'Feito até agora (seleccionar tudo)',type:'multiselect',required:false,options:['Introdução concluída','Conhecimento do produto abordado','Prática de demonstração feita','Avaliação iniciada','Nada ainda']},{id:'trmd2',label:'Há algum obstáculo agora?',type:'select',required:false,options:['Sem obstáculo','Agentes ausentes','Problema de local','Materiais em falta','Outro']},{id:'trmd3',label:'Agentes que completaram a formação até agora',type:'number',required:false},{id:'trmd4',label:'Observações iniciais / problemas',type:'textarea',required:false}],
+  'trainer-eod':[{id:'tre1',label:'Tipo de sessão de formação realizada hoje?',type:'multiselect',required:true,options:['Formação em sala','Acompanhamento no campo','Coaching individual','Workshop em grupo','Avaliação/teste','Formação de actualização']},{id:'tre2',label:'Agentes formados hoje?',type:'multiselect',required:true,options:[]},{id:'tre3',label:'Temas de formação abordados?',type:'multiselect',required:true,options:[]},{id:'tre4',label:'Pontuação média de conhecimento do produto (1-10)',type:'number',required:true},{id:'tre5',label:'Discutiu conversão de lead para venda hoje?',type:'yesno',required:false},{id:'tre6',label:'Número de agentes que passaram na avaliação?',type:'number',required:false},{id:'tre7',label:'Principal lacuna observada nos agentes hoje?',type:'textarea',required:true},{id:'tre8',label:'Plano de acção para a próxima sessão de formação',type:'textarea',required:true},{id:'tre9',label:'Eficácia geral da formação (1-10)?',type:'number',required:false},{id:'tre10',label:'Foi feito onboarding de novos agentes hoje?',type:'yesno',required:false},{id:'tre11',label:'Liste todos os agentes integrados hoje',type:'textarea',required:false}],
+  'clerk-morning':[{id:'ckm1',label:'Meta de activação de hoje?',type:'number',required:true},{id:'ckm2',label:'Meta de leads para hoje?',type:'number',required:true},{id:'ckm3',label:'Área / rota planeada para hoje?',type:'textarea',required:false},{id:'ckm4',label:'O que pode afectar o seu desempenho hoje?',type:'text',required:false},{id:'ckm5',label:'Tem um IDC de demonstração?',type:'yesno',required:true},{id:'ckm6',label:'Que apoio precisa hoje?',type:'textarea',required:false}],
+  'clerk-midday':[{id:'ckmd1',label:'Quantos leads obtidos até agora?',type:'number',required:false},{id:'ckmd2',label:'Há algum obstáculo agora?',type:'select',required:true,options:['Sem obstáculo','Transporte','Sem stock','Sem clientes','Outro']},{id:'ckmd3',label:'Quantas demonstrações feitas até agora?',type:'number',required:false},{id:'ckmd4',label:'Mudou o plano de rota da manhã?',type:'yesno',required:false}],
+  'clerk-eod':[{id:'cke1',label:'Total de demonstrações feitas hoje?',type:'number',required:true},{id:'cke2',label:'Quantos leads gerados hoje?',type:'number',required:false},{id:'cke3',label:'Quantas vendas feitas hoje?',type:'number',required:true},{id:'cke4',label:'Ferveu água / cozinhou?',type:'yesno',required:true},{id:'cke5',label:'Em que treinou os clientes?',type:'multiselect',required:true,options:['Utilização','Pagamento','Garantia','Termos do contrato','App eCoa do Cliente']},{id:'cke6',label:'Foi feito coaching?',type:'yesno',required:false},{id:'cke7',label:'Qual foi o tema?',type:'multiselect',required:false,options:[]},{id:'cke8',label:'Quantos clientes pagaram a primeira prestação?',type:'number',required:false},{id:'cke9',label:'Principal desafio hoje',type:'select',required:false,options:[]}],
+};
+
+function getTranslatedQuestions(section){
+  if(typeof appLang!=='undefined'&&appLang==='SW'&&QUESTIONS_SW[section])return JSON.parse(JSON.stringify(QUESTIONS_SW[section]));
+  if(typeof appLang!=='undefined'&&appLang==='PT'&&QUESTIONS_PT[section])return JSON.parse(JSON.stringify(QUESTIONS_PT[section]));
+  return null;
+}
+
 const DEFAULT_QUESTIONS = {
   'agent-morning':[
     {id:'am1',label:"Today's Activation Target?",type:'number',required:true},
@@ -2087,259 +2007,15 @@ const DEFAULT_QUESTIONS = {
 //  TRANSLATED QUESTIONS
 //  Auto-applied when country is selected
 // ════════════════════════════════════════════
-const QUESTIONS_SW = {
-  'agent-morning':[
-    {id:'am1',label:'Lengo lako la uanzishaji leo?',type:'number',required:true},
-    {id:'am2',label:'Lengo la wateja wanaowezekana leo?',type:'number',required:true},
-    {id:'am3',label:'Eneo / njia uliyopanga leo?',type:'textarea',required:false},
-    {id:'am4',label:'Nini kinaweza kuathiri utendaji wako leo?',type:'text',required:false},
-    {id:'am5',label:'Je, una demo IDC?',type:'yesno',required:true},
-    {id:'am6',label:'Unahitaji msaada gani leo?',type:'textarea',required:false},
-  ],
-  'agent-midday':[
-    {id:'md1',label:'Wateja wanaowezekana wangapi hadi sasa?',type:'number',required:false},
-    {id:'md2',label:'Kuna kizuizi chochote sasa hivi?',type:'select',required:true,options:['Hakuna kizuizi','Usafiri','Hakuna stok','Hakuna wateja','Kingine']},
-    {id:'md3',label:'Maonyesho mangapi yamefanywa hadi sasa?',type:'number',required:false},
-    {id:'md4',label:'Je, ulibadilisha mpango wa njia ya asubuhi?',type:'yesno',required:false},
-  ],
-  'agent-eod':[
-    {id:'ae1',label:'Jumla ya maonyesho yaliyofanywa leo?',type:'number',required:true},
-    {id:'ae2',label:'Wateja wanaowezekana wangapi walizalishwa leo?',type:'number',required:false},
-    {id:'ae3',label:'Je, mafunzo ya mara kwa mara yalifanyika?',type:'yesno',required:false},
-    {id:'ae4',label:'Mada ilikuwa nini?',type:'multiselect',required:false,options:[]},
-    {id:'ae5',label:'Changamoto kuu leo',type:'select',required:false,options:[]},
-  ],
-  'tl-morning':[
-    {id:'tlm1',label:'Mawakala wangapi wanafanya kazi uwanjani leo?',type:'number',required:true},
-    {id:'tlm2',label:'Utafanya maonyesho wapi leo?',type:'text',required:false},
-    {id:'tlm3',label:'Lengo la timu leo (vitengo vya IC)',type:'number',required:false},
-    {id:'tlm4',label:'Vikundi vilivyopangwa kutembelewa',type:'text',required:false},
-  ],
-  'tl-midday':[
-    {id:'tlmd1',label:'Imefanyika hadi sasa (chagua yote)',type:'multiselect',required:false,options:['Kitembelea kikundi','Maonyesho yamefanyika','Mawakala wamefunzwa','Hesabu ya stok imefanywa','Bado hakuna']},
-    {id:'tlmd2',label:'Kuna kizuizi chochote sasa hivi?',type:'select',required:true,options:['Hakuna kizuizi','Usafiri','Wakala hayupo','Hakuna stok','Kingine']},
-    {id:'tlmd3',label:'Unahitaji msaada wa RSM?',type:'yesno',required:false},
-    {id:'tlmd4',label:'Vitengo vya IC vilivyouzwa na timu hadi sasa',type:'number',required:false},
-  ],
-  'tl-eod':[
-    {id:'tle1',label:'Mawakala wangapi wanafanya kazi uwanjani leo?',type:'number',required:true},
-    {id:'tle2',label:'Ulifanya maonyesho wapi leo?',type:'text',required:false},
-    {id:'tle3',label:'Je, kikao cha mafunzo kilifanyika leo?',type:'yesno',required:false},
-    {id:'tle4',label:'Mada zilizoshughulikiwa',type:'multiselect',required:false,options:[]},
-    {id:'tle5',label:'IDC / vyungu vya kuuza vingapi viko kikundini?',type:'text',required:false},
-    {id:'tle6',label:'IDC ya ufunguzi',type:'number',required:false},
-    {id:'tle7',label:'IDC ya kufunga',type:'number',required:false},
-    {id:'tle8',label:'Changamoto kuu leo',type:'select',required:false,options:[]},
-    {id:'tle9',label:'Wateja wangapi walitembelea leo kwa RE/Matumizi?',type:'number',required:false},
-  ],
-  'rsm-morning':[
-    {id:'rsmm1',label:'Viongozi wa Timu wanaofuatana leo',type:'multiselect',required:false,options:[]},
-    {id:'rsmm2',label:'Lengo kuu leo',type:'select',required:false,options:['Kufunza VT','Ukaguzi wa kikundi','Ukaguzi wa stok','Kutatua matatizo','Ziara ya soko']},
-    {id:'rsmm3',label:'Vikundi vya kutembelea leo',type:'multiselect',required:false,options:[]},
-    {id:'rsmm4',label:'Lengo la timu leo (vitengo vya IC)',type:'number',required:false},
-  ],
-  'rsm-midday':[
-    {id:'rsmmd1',label:'Imefanyika hadi sasa (chagua yote)',type:'multiselect',required:false,options:['Kitembelea VT','Kitembelea kikundi','Mafunzo yamefanyika','Ukaguzi wa stok','Bado hakuna']},
-    {id:'rsmmd2',label:'Kuna kizuizi chochote sasa hivi?',type:'select',required:true,options:['Hakuna kizuizi','Usafiri','VT hayupo','Tatizo la soko','Kingine']},
-    {id:'rsmmd3',label:'Unahitaji msaada wa Makao Makuu?',type:'yesno',required:false},
-    {id:'rsmmd4',label:'Vitengo vya IC vilivyouzwa na timu hadi sasa',type:'number',required:false},
-  ],
-  'rsm-eod':[
-    {id:'rsme1',label:'Wakala/VT gani waliofunzwa/kufuatana leo?',type:'multiselect',required:false,options:[]},
-    {id:'rsme2',label:'Vikundi vipi vilivyotembelewa leo?',type:'multiselect',required:false,options:[]},
-    {id:'rsme3',label:'Mahali pa maonyesho leo',type:'multiselect',required:false,options:[]},
-    {id:'rsme4',label:'Je, kikao cha mafunzo kilifanyika leo?',type:'yesno',required:false},
-    {id:'rsme5',label:'Mada zilizoshughulikiwa',type:'multiselect',required:false,options:[]},
-    {id:'rsme6',label:'Pengo kubwa lililoonekana',type:'textarea',required:false},
-    {id:'rsme7',label:'Changamoto kuu leo',type:'select',required:false,options:[]},
-    {id:'rsme8',label:'Wateja wangapi walitembelea leo kwa RE/Matumizi?',type:'number',required:false},
-  ],
-  'trainer-morning':[
-    {id:'trm1',label:'Aina ya kikao cha mafunzo leo',type:'multiselect',required:true,options:['Mafunzo darasani','Ziara ya uwanjani','Mafunzo binafsi','Warsha ya kikundi','Tathmini/mtihani','Mafunzo ya marudio']},
-    {id:'trm2',label:'Mawakala wa kufunza leo',type:'multiselect',required:true,options:[]},
-    {id:'trm3',label:'Mada zilizopangwa leo',type:'multiselect',required:false,options:[]},
-    {id:'trm4',label:'Lengo la mafunzo (mawakala wa kukamilisha)',type:'number',required:false},
-  ],
-  'trainer-midday':[
-    {id:'trmd1',label:'Imefanyika hadi sasa (chagua yote)',type:'multiselect',required:false,options:['Utangulizi umekamilika','Maarifa ya bidhaa yameshughulikiwa','Mazoezi ya maonyesho yamefanywa','Tathmini imeanza','Bado hakuna']},
-    {id:'trmd2',label:'Kuna kizuizi chochote sasa hivi?',type:'select',required:false,options:['Hakuna kizuizi','Mawakala hawakuja','Tatizo la mahali','Vifaa vimekosekana','Kingine']},
-    {id:'trmd3',label:'Mawakala waliokamilisha mafunzo hadi sasa',type:'number',required:false},
-    {id:'trmd4',label:'Uchunguzi wa mapema / matatizo',type:'textarea',required:false},
-  ],
-  'trainer-eod':[
-    {id:'tre1',label:'Aina ya kikao cha mafunzo kilichofanyika leo?',type:'multiselect',required:true,options:['Mafunzo darasani','Ziara ya uwanjani','Mafunzo binafsi','Warsha ya kikundi','Tathmini/mtihani','Mafunzo ya marudio']},
-    {id:'tre2',label:'Mawakala waliofunzwa leo?',type:'multiselect',required:true,options:[]},
-    {id:'tre3',label:'Mada za mafunzo zilizoshughulikiwa?',type:'multiselect',required:true,options:[]},
-    {id:'tre4',label:'Wastani wa alama za maarifa ya bidhaa (1-10)',type:'number',required:true},
-    {id:'tre5',label:'Je, ulijadili ubadilishaji wa wateja hadi mauzo leo?',type:'yesno',required:false},
-    {id:'tre6',label:'Idadi ya mawakala waliofaulu tathmini?',type:'number',required:false},
-    {id:'tre7',label:'Pengo kuu lililoonekana kwa mawakala leo?',type:'textarea',required:true},
-    {id:'tre8',label:'Mpango wa utekelezaji kwa kikao cha mafunzo kijacho',type:'textarea',required:true},
-    {id:'tre9',label:'Ufanisi wa jumla wa mafunzo (1-10)?',type:'number',required:false},
-    {id:'tre10',label:'Je, uanzishaji wa wakala mpya ulifanyika leo?',type:'yesno',required:false},
-    {id:'tre11',label:'Orodhesha mawakala wote waliowekwa leo',type:'textarea',required:false},
-  ],
-  'clerk-morning':[
-    {id:'ckm1',label:'Lengo lako la uanzishaji leo?',type:'number',required:true},
-    {id:'ckm2',label:'Lengo la wateja wanaowezekana leo?',type:'number',required:true},
-    {id:'ckm3',label:'Eneo / njia uliyopanga leo?',type:'textarea',required:false},
-    {id:'ckm4',label:'Nini kinaweza kuathiri utendaji wako leo?',type:'text',required:false},
-    {id:'ckm5',label:'Je, una demo IDC?',type:'yesno',required:true},
-    {id:'ckm6',label:'Unahitaji msaada gani leo?',type:'textarea',required:false},
-  ],
-  'clerk-midday':[
-    {id:'ckmd1',label:'Wateja wanaowezekana wangapi hadi sasa?',type:'number',required:false},
-    {id:'ckmd2',label:'Kuna kizuizi chochote sasa hivi?',type:'select',required:true,options:['Hakuna kizuizi','Usafiri','Hakuna stok','Hakuna wateja','Kingine']},
-    {id:'ckmd3',label:'Maonyesho mangapi yamefanywa hadi sasa?',type:'number',required:false},
-    {id:'ckmd4',label:'Je, ulibadilisha mpango wa njia ya asubuhi?',type:'yesno',required:false},
-  ],
-  'clerk-eod':[
-    {id:'cke1',label:'Jumla ya maonyesho yaliyofanywa leo?',type:'number',required:true},
-    {id:'cke2',label:'Wateja wanaowezekana wangapi walizalishwa leo?',type:'number',required:false},
-    {id:'cke3',label:'Mauzo mangapi yamefanywa leo?',type:'number',required:true},
-    {id:'cke4',label:'Je, ulipika maji / kupika?',type:'yesno',required:true},
-    {id:'cke5',label:'Umefunza wateja kuhusu nini?',type:'multiselect',required:true,options:['Matumizi','Malipo','Dhamana','Masharti ya mkataba','Programu ya eCoa ya Mteja']},
-    {id:'cke6',label:'Je, mafunzo ya mara kwa mara yalifanyika?',type:'yesno',required:false},
-    {id:'cke7',label:'Mada ilikuwa nini?',type:'multiselect',required:false,options:[]},
-    {id:'cke8',label:'Wateja wangapi walifanya malipo ya kwanza?',type:'number',required:false},
-    {id:'cke9',label:'Changamoto kuu leo',type:'select',required:false,options:[]},
-  ],
-};
 
-const QUESTIONS_PT = {
-  'agent-morning':[
-    {id:'am1',label:'Meta de activação de hoje?',type:'number',required:true},
-    {id:'am2',label:'Meta de leads para hoje?',type:'number',required:true},
-    {id:'am3',label:'Área / rota planeada para hoje?',type:'textarea',required:false},
-    {id:'am4',label:'O que pode afectar o seu desempenho hoje?',type:'text',required:false},
-    {id:'am5',label:'Tem um IDC de demonstração?',type:'yesno',required:true},
-    {id:'am6',label:'Que apoio precisa hoje?',type:'textarea',required:false},
-  ],
-  'agent-midday':[
-    {id:'md1',label:'Quantos leads obtidos até agora?',type:'number',required:false},
-    {id:'md2',label:'Há algum obstáculo agora?',type:'select',required:true,options:['Sem obstáculo','Transporte','Sem stock','Sem clientes','Outro']},
-    {id:'md3',label:'Quantas demonstrações feitas até agora?',type:'number',required:false},
-    {id:'md4',label:'Mudou o plano de rota da manhã?',type:'yesno',required:false},
-  ],
-  'agent-eod':[
-    {id:'ae1',label:'Total de demonstrações feitas hoje?',type:'number',required:true},
-    {id:'ae2',label:'Quantos leads gerados hoje?',type:'number',required:false},
-    {id:'ae3',label:'Foi feito coaching?',type:'yesno',required:false},
-    {id:'ae4',label:'Qual foi o tema?',type:'multiselect',required:false,options:[]},
-    {id:'ae5',label:'Principal desafio hoje',type:'select',required:false,options:[]},
-  ],
-  'tl-morning':[
-    {id:'tlm1',label:'Quantos agentes estão activos no campo hoje?',type:'number',required:true},
-    {id:'tlm2',label:'Onde vai fazer demonstrações hoje?',type:'text',required:false},
-    {id:'tlm3',label:'Meta da equipa para hoje (unidades IC)',type:'number',required:false},
-    {id:'tlm4',label:'Clusters planeados para visitar',type:'text',required:false},
-  ],
-  'tl-midday':[
-    {id:'tlmd1',label:'Feito até agora (seleccionar tudo)',type:'multiselect',required:false,options:['Visitou cluster','Fez demonstrações','Treinou agentes','Contagem de stock feita','Nada ainda']},
-    {id:'tlmd2',label:'Há algum obstáculo agora?',type:'select',required:true,options:['Sem obstáculo','Transporte','Agente ausente','Sem stock','Outro']},
-    {id:'tlmd3',label:'Precisa de apoio do RSM?',type:'yesno',required:false},
-    {id:'tlmd4',label:'Unidades IC vendidas pela equipa até agora',type:'number',required:false},
-  ],
-  'tl-eod':[
-    {id:'tle1',label:'Quantos agentes estão activos no campo hoje?',type:'number',required:true},
-    {id:'tle2',label:'Onde fez demonstrações hoje?',type:'text',required:false},
-    {id:'tle3',label:'Foi realizada uma sessão de coaching hoje?',type:'yesno',required:false},
-    {id:'tle4',label:'Temas abordados',type:'multiselect',required:false,options:[]},
-    {id:'tle5',label:'Quantos IDCs / panelas à venda no cluster?',type:'text',required:false},
-    {id:'tle6',label:'IDC abertura',type:'number',required:false},
-    {id:'tle7',label:'IDC fecho',type:'number',required:false},
-    {id:'tle8',label:'Principal desafio hoje',type:'select',required:false,options:[]},
-    {id:'tle9',label:'Quantos clientes visitaram hoje para RE/Utilização?',type:'number',required:false},
-  ],
-  'rsm-morning':[
-    {id:'rsmm1',label:'Líderes de equipa a acompanhar hoje',type:'multiselect',required:false,options:[]},
-    {id:'rsmm2',label:'Foco principal hoje',type:'select',required:false,options:['Treinar LEs','Auditoria de cluster','Verificação de stock','Resolver problemas','Visita ao mercado']},
-    {id:'rsmm3',label:'Clusters a visitar hoje',type:'multiselect',required:false,options:[]},
-    {id:'rsmm4',label:'Meta da equipa para hoje (unidades IC)',type:'number',required:false},
-  ],
-  'rsm-midday':[
-    {id:'rsmmd1',label:'Feito até agora (seleccionar tudo)',type:'multiselect',required:false,options:['Visitou LE','Visitou cluster','Coaching feito','Verificação de stock','Nada ainda']},
-    {id:'rsmmd2',label:'Há algum obstáculo agora?',type:'select',required:true,options:['Sem obstáculo','Transporte','LE ausente','Problema de mercado','Outro']},
-    {id:'rsmmd3',label:'Precisa de apoio da sede?',type:'yesno',required:false},
-    {id:'rsmmd4',label:'Unidades IC vendidas pela equipa até agora',type:'number',required:false},
-  ],
-  'rsm-eod':[
-    {id:'rsme1',label:'Que Agente/LE foi treinado/acompanhado hoje?',type:'multiselect',required:false,options:[]},
-    {id:'rsme2',label:'Que clusters foram visitados hoje?',type:'multiselect',required:false,options:[]},
-    {id:'rsme3',label:'Local de demonstração hoje',type:'multiselect',required:false,options:[]},
-    {id:'rsme4',label:'Foi realizada uma sessão de coaching hoje?',type:'yesno',required:false},
-    {id:'rsme5',label:'Temas abordados',type:'multiselect',required:false,options:[]},
-    {id:'rsme6',label:'Maior lacuna encontrada',type:'textarea',required:false},
-    {id:'rsme7',label:'Principal desafio hoje',type:'select',required:false,options:[]},
-    {id:'rsme8',label:'Quantos clientes visitaram hoje para RE/Utilização?',type:'number',required:false},
-  ],
-  'trainer-morning':[
-    {id:'trm1',label:'Tipo de sessão de formação hoje',type:'multiselect',required:true,options:['Formação em sala','Acompanhamento no campo','Coaching individual','Workshop em grupo','Avaliação/teste','Formação de actualização']},
-    {id:'trm2',label:'Agentes a formar hoje',type:'multiselect',required:true,options:[]},
-    {id:'trm3',label:'Temas planeados para hoje',type:'multiselect',required:false,options:[]},
-    {id:'trm4',label:'Meta de formação (agentes a completar)',type:'number',required:false},
-  ],
-  'trainer-midday':[
-    {id:'trmd1',label:'Feito até agora (seleccionar tudo)',type:'multiselect',required:false,options:['Introdução concluída','Conhecimento do produto abordado','Prática de demonstração feita','Avaliação iniciada','Nada ainda']},
-    {id:'trmd2',label:'Há algum obstáculo agora?',type:'select',required:false,options:['Sem obstáculo','Agentes ausentes','Problema de local','Materiais em falta','Outro']},
-    {id:'trmd3',label:'Agentes que completaram a formação até agora',type:'number',required:false},
-    {id:'trmd4',label:'Observações iniciais / problemas',type:'textarea',required:false},
-  ],
-  'trainer-eod':[
-    {id:'tre1',label:'Tipo de sessão de formação realizada hoje?',type:'multiselect',required:true,options:['Formação em sala','Acompanhamento no campo','Coaching individual','Workshop em grupo','Avaliação/teste','Formação de actualização']},
-    {id:'tre2',label:'Agentes formados hoje?',type:'multiselect',required:true,options:[]},
-    {id:'tre3',label:'Temas de formação abordados?',type:'multiselect',required:true,options:[]},
-    {id:'tre4',label:'Pontuação média de conhecimento do produto (1-10)',type:'number',required:true},
-    {id:'tre5',label:'Discutiu conversão de lead para venda hoje?',type:'yesno',required:false},
-    {id:'tre6',label:'Número de agentes que passaram na avaliação?',type:'number',required:false},
-    {id:'tre7',label:'Principal lacuna observada nos agentes hoje?',type:'textarea',required:true},
-    {id:'tre8',label:'Plano de acção para a próxima sessão de formação',type:'textarea',required:true},
-    {id:'tre9',label:'Eficácia geral da formação (1-10)?',type:'number',required:false},
-    {id:'tre10',label:'Foi feito onboarding de novos agentes hoje?',type:'yesno',required:false},
-    {id:'tre11',label:'Liste todos os agentes integrados hoje',type:'textarea',required:false},
-  ],
-  'clerk-morning':[
-    {id:'ckm1',label:'Meta de activação de hoje?',type:'number',required:true},
-    {id:'ckm2',label:'Meta de leads para hoje?',type:'number',required:true},
-    {id:'ckm3',label:'Área / rota planeada para hoje?',type:'textarea',required:false},
-    {id:'ckm4',label:'O que pode afectar o seu desempenho hoje?',type:'text',required:false},
-    {id:'ckm5',label:'Tem um IDC de demonstração?',type:'yesno',required:true},
-    {id:'ckm6',label:'Que apoio precisa hoje?',type:'textarea',required:false},
-  ],
-  'clerk-midday':[
-    {id:'ckmd1',label:'Quantos leads obtidos até agora?',type:'number',required:false},
-    {id:'ckmd2',label:'Há algum obstáculo agora?',type:'select',required:true,options:['Sem obstáculo','Transporte','Sem stock','Sem clientes','Outro']},
-    {id:'ckmd3',label:'Quantas demonstrações feitas até agora?',type:'number',required:false},
-    {id:'ckmd4',label:'Mudou o plano de rota da manhã?',type:'yesno',required:false},
-  ],
-  'clerk-eod':[
-    {id:'cke1',label:'Total de demonstrações feitas hoje?',type:'number',required:true},
-    {id:'cke2',label:'Quantos leads gerados hoje?',type:'number',required:false},
-    {id:'cke3',label:'Quantas vendas feitas hoje?',type:'number',required:true},
-    {id:'cke4',label:'Ferveu água / cozinhou?',type:'yesno',required:true},
-    {id:'cke5',label:'Em que treinou os clientes?',type:'multiselect',required:true,options:['Utilização','Pagamento','Garantia','Termos do contrato','App eCoa do Cliente']},
-    {id:'cke6',label:'Foi feito coaching?',type:'yesno',required:false},
-    {id:'cke7',label:'Qual foi o tema?',type:'multiselect',required:false,options:[]},
-    {id:'cke8',label:'Quantos clientes pagaram a primeira prestação?',type:'number',required:false},
-    {id:'cke9',label:'Principal desafio hoje',type:'select',required:false,options:[]},
-  ],
-};
 
-// Get questions in the right language
-function getTranslatedQuestions(section){
-  if(appLang==='SW' && QUESTIONS_SW[section]) return JSON.parse(JSON.stringify(QUESTIONS_SW[section]));
-  if(appLang==='PT' && QUESTIONS_PT[section]) return JSON.parse(JSON.stringify(QUESTIONS_PT[section]));
-  return null; // fall back to default
-}
 
 function getQuestions(section){
-  // ALWAYS use translated questions when language is not English
-  // This takes priority over any cached/stored English questions
-  if(typeof appLang !== 'undefined' && appLang !== 'EN'){
-    const translated = getTranslatedQuestions(section);
-    if(translated && translated.length) return translated;
+  // Translations always win when language is not English
+  if(typeof appLang!=='undefined'&&appLang!=='EN'){
+    const t=getTranslatedQuestions(section);
+    if(t&&t.length) return t;
   }
-  // English: check locally edited questions first
   const stored = localStorage.getItem(QM_KEY);
   if(stored){
     try{
@@ -2347,7 +2023,6 @@ function getQuestions(section){
       if(all[section]) return JSON.parse(JSON.stringify(all[section]));
     }catch(e){}
   }
-  // Fall back to synced questions from Google Sheets
   const synced = localStorage.getItem('fla_synced_questions');
   if(synced){
     try{
@@ -2355,7 +2030,6 @@ function getQuestions(section){
       if(sq[section]) return JSON.parse(JSON.stringify(sq[section]));
     }catch(e){}
   }
-  // Fall back to built-in defaults
   return JSON.parse(JSON.stringify(DEFAULT_QUESTIONS[section] || []));
 }
 
@@ -2729,12 +2403,9 @@ function selectMS(key, input, multiple){
   if(key==='keyChallenge')  toggleOtherChallenge();
   // Auto language switch based on country
   if(key==='cascadeCountry'){
-    onCascadeCountry();
     const lang=detectAppLang(firstMS('cascadeCountry'));
     applyAppLang(lang);
   }
-  if(key==='cascadeRegion')  onCascadeRegion();
-  if(key==='cascadeCluster') onCascadeCluster();
 }
 function clearMS(key){
   msValues[key]=[];
@@ -2757,6 +2428,89 @@ function updateMSLabel(key, placeholder='Select...'){
 //  DASHBOARD
 // ════════════════════════════════════════════
 
+function loadDashboard(){
+  const filter = document.getElementById('dashFilter')?.value || 'today';
+  const allRpts = reports();
+  const now = new Date();
+
+  // Filter by time
+  const filtered = allRpts.filter(r => {
+    const d = new Date(r.id);
+    if(filter==='today') return d.toDateString()===now.toDateString();
+    if(filter==='week'){
+      const weekAgo = new Date(now); weekAgo.setDate(now.getDate()-7);
+      return d >= weekAgo;
+    }
+    return true;
+  });
+
+  // KPIs
+  const uniqueAgents   = new Set(filtered.filter(r=>r.role==='Agent').map(r=>r.name)).size;
+  const uniqueClusters = new Set(filtered.map(r=>r.cluster).filter(Boolean)).size;
+  document.getElementById('dash_total').textContent    = allRpts.length;
+  document.getElementById('dash_today').textContent    = allRpts.filter(r=>new Date(r.id).toDateString()===now.toDateString()).length;
+  document.getElementById('dash_agents').textContent   = uniqueAgents;
+  document.getElementById('dash_clusters').textContent = uniqueClusters;
+
+  // By Role
+  const roles = ['Agent','TL','RSM','Trainer','Clerk'];
+  const roleCounts = {};
+  roles.forEach(r => roleCounts[r] = filtered.filter(x=>x.role===r).length);
+  const maxRole = Math.max(...Object.values(roleCounts), 1);
+  document.getElementById('dash_by_role').innerHTML = roles.map(r => `
+    <div class="dash-bar-wrap">
+      <div class="dash-bar-label"><span>${r}</span><span>${roleCounts[r]}</span></div>
+      <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${(roleCounts[r]/maxRole*100).toFixed(0)}%"></div></div>
+    </div>`).join('');
+
+  // By Session
+  const sessions = ['Morning','Midday','EOD'];
+  const sessCounts = {};
+  sessions.forEach(s => sessCounts[s] = filtered.filter(x=>x.session===s).length);
+  const maxSess = Math.max(...Object.values(sessCounts), 1);
+  const sessEmoji = {Morning:'🌅',Midday:'☀️',EOD:'🌆'};
+  document.getElementById('dash_by_session').innerHTML = sessions.map(s => `
+    <div class="dash-bar-wrap">
+      <div class="dash-bar-label"><span>${sessEmoji[s]} ${s}</span><span>${sessCounts[s]}</span></div>
+      <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${(sessCounts[s]/maxSess*100).toFixed(0)}%"></div></div>
+    </div>`).join('');
+
+  // By Region
+  const regionCounts = {};
+  filtered.forEach(r => { if(r.region){ regionCounts[r.region]=(regionCounts[r.region]||0)+1; }});
+  const sortedRegions = Object.entries(regionCounts).sort((a,b)=>b[1]-a[1]);
+  const maxReg = Math.max(...sortedRegions.map(x=>x[1]), 1);
+  document.getElementById('dash_by_region').innerHTML = sortedRegions.length
+    ? sortedRegions.map(([reg,cnt]) => `
+        <div class="dash-bar-wrap">
+          <div class="dash-bar-label"><span>${reg}</span><span>${cnt}</span></div>
+          <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${(cnt/maxReg*100).toFixed(0)}%"></div></div>
+        </div>`).join('')
+    : '<p class="small">No data for this period</p>';
+
+  // By Cluster (top 8)
+  const clusterCounts = {};
+  filtered.forEach(r => { if(r.cluster){ clusterCounts[r.cluster]=(clusterCounts[r.cluster]||0)+1; }});
+  const sortedClusters = Object.entries(clusterCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxClust = Math.max(...sortedClusters.map(x=>x[1]), 1);
+  document.getElementById('dash_by_cluster').innerHTML = sortedClusters.length
+    ? sortedClusters.map(([cl,cnt]) => `
+        <div class="dash-bar-wrap">
+          <div class="dash-bar-label"><span>📍 ${cl}</span><span>${cnt}</span></div>
+          <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${(cnt/maxClust*100).toFixed(0)}%"></div></div>
+        </div>`).join('')
+    : '<p class="small">No data for this period</p>';
+
+  // Recent 5 submissions
+  const recent = filtered.slice().reverse().slice(0,5);
+  document.getElementById('dash_recent').innerHTML = recent.length
+    ? recent.map(r => `
+        <div class="dash-item">
+          <b>${r.name}</b> <span class="badge">${r.role} · ${r.session}</span>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${r.cluster||''} · ${r.region||''} · ${r.submittedAt||''}</div>
+        </div>`).join('')
+    : '<p class="small">No submissions for this period</p>';
+}
 
 // ── START APP ──
 
@@ -2770,6 +2524,72 @@ try {
   loadDropdowns();
   refreshFromGoogleSheets().catch(()=>{});
 }
+
+// ════════════════════════════════════════════
+//  CASCADE: Country → Region → Cluster → Name
+// ════════════════════════════════════════════
+function roleNameField(r){
+  if(r==='Agent')return 'AgentName';
+  if(r==='TL')return 'TLName';
+  if(r==='Trainer')return 'TrainerName';
+  if(r==='Clerk')return 'ClerkName';
+  return 'RSMName';
+}
+function loadCascadeCountry(){
+  const m=getMapping();
+  const countries=[...new Set(m.map(x=>x.Country).filter(Boolean))].sort();
+  renderMultiSelect('countrySelectBox','cascadeCountry',countries,false,'Select country');
+  document.getElementById('regionRow').classList.add('hidden');
+  document.getElementById('clusterRow').classList.add('hidden');
+  document.getElementById('nameRow').classList.add('hidden');
+  document.getElementById('cascadeNotice').classList.remove('hidden');
+  msValues.cascadeRegion=[];msValues.cascadeCluster=[];msValues.name=[];
+}
+function onCascadeCountry(){
+  const country=firstMS('cascadeCountry');
+  if(!country){
+    document.getElementById('regionRow').classList.add('hidden');
+    document.getElementById('clusterRow').classList.add('hidden');
+    document.getElementById('nameRow').classList.add('hidden');
+    return;
+  }
+  const regions=[...new Set(getMapping().filter(x=>x.Country===country).map(x=>x.Region).filter(Boolean))].sort();
+  renderMultiSelect('regionSelectBox','cascadeRegion',regions,false,'Select region');
+  document.getElementById('regionRow').classList.remove('hidden');
+  document.getElementById('clusterRow').classList.add('hidden');
+  document.getElementById('nameRow').classList.add('hidden');
+  msValues.cascadeRegion=[];msValues.cascadeCluster=[];msValues.name=[];
+}
+function onCascadeRegion(){
+  const country=firstMS('cascadeCountry'),region=firstMS('cascadeRegion');
+  if(!region){document.getElementById('clusterRow').classList.add('hidden');document.getElementById('nameRow').classList.add('hidden');return;}
+  const clusters=[...new Set(getMapping().filter(x=>x.Country===country&&x.Region===region).map(x=>x.Cluster).filter(Boolean))].sort();
+  renderMultiSelect('clusterCascadeBox','cascadeCluster',clusters,false,'Select cluster');
+  document.getElementById('clusterRow').classList.remove('hidden');
+  document.getElementById('nameRow').classList.add('hidden');
+  msValues.cascadeCluster=[];msValues.name=[];
+}
+function onCascadeCluster(){
+  const country=firstMS('cascadeCountry'),region=firstMS('cascadeRegion'),cluster=firstMS('cascadeCluster');
+  if(!cluster){document.getElementById('nameRow').classList.add('hidden');return;}
+  const names=[...new Set(getMapping().filter(x=>x.Country===country&&x.Region===region&&x.Cluster===cluster).map(x=>x[roleNameField(role)]).filter(Boolean))].sort();
+  renderMultiSelect('nameSelectBox','name',names,false,'Select '+role+' name');
+  document.getElementById('nameRow').classList.remove('hidden');
+  document.getElementById('cascadeNotice').classList.add('hidden');
+  const ce=document.getElementById('country');if(ce)ce.value=country;
+  const re=document.getElementById('region');if(re)re.value=region;
+  msValues.clusterSelect=[cluster];updateMSLabel('clusterSelect','Select cluster');
+  afterNameSelected();
+}
+
+// ════════════════════════════════════════════
+//  DEVICE LOCK SYSTEM
+// ════════════════════════════════════════════
+
+// ════════════════════════════════════════════
+//  MULTI-LANGUAGE SUPPORT
+// ════════════════════════════════════════════
+
 </script>
 </body>
 </html>
