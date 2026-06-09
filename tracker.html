@@ -226,9 +226,7 @@ small{font-size:12px;color:var(--muted);line-height:1.45}
 <!-- ═══ MAIN CONTENT ═══ -->
 <div class="wrap">
 
-  <div class="tabs">
-    <button class="tab active" id="submitTab" onclick="setTab('submit')">Submit</button>
-    <button class="tab"        id="dashTab"   onclick="setTab('dash')">📊 Dashboard</button>
+  <div class="tabs" style="display:none">
     <button class="tab hidden"  id="adminTab"  onclick="setTab('admin')">Admin</button>
   </div>
 
@@ -637,7 +635,7 @@ small{font-size:12px;color:var(--muted);line-height:1.45}
 </div><!-- /wrap -->
 
 <div class="bottom">
-  <button class="submit" onclick="submitReport()">Submit locked report</button>
+  <button class="submit" onclick="submitReport()">Submit report</button>
 </div>
 
 </div><!-- /app -->
@@ -1225,9 +1223,7 @@ function showPwMsg(type, txt){
 // ════════════════════════════════════════════
 function setTab(t){
   if(t==='admin' && !isAdmin){ openPinModal(); return; }
-  document.getElementById('submitTab').classList.toggle('active', t==='submit');
   document.getElementById('adminTab').classList.toggle('active',  t==='admin');
-  document.getElementById('dashTab').classList.toggle('active',   t==='dash');
   document.getElementById('submitPage').classList.toggle('hidden', t!=='submit');
   document.getElementById('adminPage').classList.toggle('hidden',  t!=='admin');
   document.getElementById('dashPage').classList.toggle('hidden',   t!=='dash');
@@ -1734,7 +1730,14 @@ async function refreshFromGoogleSheets(){
     if(mapUrl){
       const txt  = await fetch(mapUrl,{cache:'no-store'}).then(r=>r.text());
       const data = rowsToObjects(parseCSV(txt));
-      if(data.length){ saveMapping(data); loadNames(); loadDropdowns(); }
+      if(data.length){
+        saveMapping(data);
+        loadCascadeCountry();
+        loadDropdowns();
+        // Re-apply language if country already selected
+        const sel = firstMS('cascadeCountry');
+        if(sel && typeof detectAppLang==='function') applyAppLang(detectAppLang(sel));
+      }
     }
     if(dropUrl){
       const txt  = await fetch(dropUrl,{cache:'no-store'}).then(r=>r.text());
@@ -2401,11 +2404,13 @@ function selectMS(key, input, multiple){
   if(key==='tlCoachHeld')   toggleCoach('tl');
   if(key==='rsmCoachHeld')  toggleCoach('rsm');
   if(key==='keyChallenge')  toggleOtherChallenge();
-  // Auto language switch based on country
+  // Cascade triggers
   if(key==='cascadeCountry'){
-    const lang=detectAppLang(firstMS('cascadeCountry'));
-    applyAppLang(lang);
+    onCascadeCountry();
+    if(typeof detectAppLang==='function') applyAppLang(detectAppLang(firstMS('cascadeCountry')));
   }
+  if(key==='cascadeRegion')  onCascadeRegion();
+  if(key==='cascadeCluster') onCascadeCluster();
 }
 function clearMS(key){
   msValues[key]=[];
