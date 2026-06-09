@@ -1373,51 +1373,55 @@ function renderDynamicForm(){
     const req = q.required ? ' <span style="color:var(--red);font-weight:900">*</span>' : '';
     html += `<div style="margin-top:12px" id="dq_wrap_${i}">`;
     html += `<label>${q.label}${req}</label>`;
-    if(q.type==='number')      html += `<input type="number" id="dq_${i}" value="0" min="0" inputmode="numeric">`;
-    else if(q.type==='text')   html += `<input type="text" id="dq_${i}" placeholder="">`;
+    if(q.type==='number')        html += `<input type="number" id="dq_${i}" value="0" min="0" inputmode="numeric">`;
+    else if(q.type==='text')     html += `<input type="text" id="dq_${i}" placeholder="">`;
     else if(q.type==='textarea') html += `<textarea id="dq_${i}" rows="3"></textarea>`;
     else html += `<div id="dq_ms_${i}"></div>`;
     html += `</div>`;
   });
   container.innerHTML = html;
-  // Render dropdowns/multi-selects
+
+  // Translated Yes/No labels
+  const yesNo = appLang==='SW' ? ['Hapana','Ndiyo'] : appLang==='PT' ? ['Não','Sim'] : ['No','Yes'];
+  const selectPh = appLang==='SW' ? 'Chagua...' : appLang==='PT' ? 'Selecionar...' : 'Select...';
+
   const cfg = getConfig();
   qs.forEach((q,i) => {
     if(!['yesno','select','multiselect'].includes(q.type)) return;
     let opts = q.options && q.options.length ? [...q.options] : [];
     let multiple = q.type==='multiselect';
-    if(q.type==='yesno'){ opts=['No','Yes']; multiple=false; }
+    if(q.type==='yesno'){ opts=yesNo; multiple=false; }
+    // Only fall back to English config if no options defined AND language is English
     if(!opts.length){
       const lbl = q.label.toLowerCase();
       if(lbl.includes('challenge')) opts = cfg.challenges||[];
       else if(lbl.includes('topic')) opts = cfg.topics||[];
       else if(lbl.includes('location')) opts = cfg.demoLocations||[];
       else if(lbl.includes('blocker')) opts = cfg.blockers||defaultConfig.blockers;
-      else if(lbl.includes('done so far')) opts = cfg.doneSoFar||defaultConfig.doneSoFar;
+      else if(lbl.includes('done so far')||lbl.includes('imefanyika')||lbl.includes('feito')) opts = cfg.doneSoFar||defaultConfig.doneSoFar;
       else if(lbl.includes('agent')&&lbl.includes('train')) opts = [...new Set(getMapping().map(x=>x.AgentName).filter(Boolean))];
-      else if(lbl.includes('agent')) opts = [...new Set(getMapping().map(x=>x.AgentName).filter(Boolean))];
+      else if(lbl.includes('agent')||lbl.includes('wakala')||lbl.includes('agente')) opts = [...new Set(getMapping().map(x=>x.AgentName).filter(Boolean))];
       else if(lbl.includes('cluster')) opts = [...new Set(getMapping().map(x=>x.Cluster).filter(Boolean))];
-      else if(lbl.includes('tl')) opts = [...new Set(getMapping().map(x=>x.TLName).filter(Boolean))];
-      else opts = ['Yes','No'];
+      else if(lbl.includes('tl')||lbl.includes('kiongozi')||lbl.includes('líder')) opts = [...new Set(getMapping().map(x=>x.TLName).filter(Boolean))];
+      else opts = yesNo;
     }
-    renderMultiSelect(`dq_ms_${i}`,`dq_ms_${i}`,opts,multiple,'Select...');
-    // After rendering, set up conditional logic for onboarding question
+    renderMultiSelect(`dq_ms_${i}`,`dq_ms_${i}`,opts,multiple,selectPh);
+    // Conditional logic for onboarding question tre10/tre11
     if(q.id==='tre10'){
-      const msEl = document.getElementById(`dq_ms_${i}`);
+      const msEl=document.getElementById(`dq_ms_${i}`);
       if(msEl){
-        const wrap11 = document.getElementById(`dq_wrap_${i+1}`);
-        // Initially hide tre11 if tre10 is No or not set
+        const wrap11=document.getElementById(`dq_wrap_${i+1}`);
         if(wrap11) wrap11.style.display='none';
-        // Watch for changes on tre10
         setTimeout(()=>{
-          const radios = msEl.querySelectorAll('input[type="radio"]');
-          radios.forEach(radio => {
-            radio.addEventListener('change', () => {
-              const w = document.getElementById(`dq_wrap_${i+1}`);
-              if(w) w.style.display = radio.value==='Yes' && radio.checked ? 'block' : 'none';
+          const radios=msEl.querySelectorAll('input[type="radio"]');
+          radios.forEach(radio=>{
+            radio.addEventListener('change',()=>{
+              const w=document.getElementById(`dq_wrap_${i+1}`);
+              const yesVal=yesNo[1]; // 'Yes' or 'Ndiyo' or 'Sim'
+              if(w) w.style.display=(radio.value===yesVal&&radio.checked)?'block':'none';
             });
           });
-        }, 100);
+        },100);
       }
     }
   });
