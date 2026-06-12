@@ -424,8 +424,51 @@ function parseCSV(txt){
   }).filter(r=>r.role&&r.name);
 }
 
-function pget(r,field){return r.data?.[field]||'';}
-function pnum(r,field){return parseFloat(r.data?.[field])||0;}
+// ── KEY ALIASES ────────────────────────────────────────────────
+// New tracker saves answers under question IDs (am1, ae2, tle3 …).
+// Older submissions used legacy names (agents, demoLocation, idcSold …)
+// and some Clerk question IDs shifted after edits. pget tries the
+// direct key first, then falls back to its aliases — so both old and
+// new rows feed the same charts. Layout/behavior is unchanged.
+const KEY_ALIASES = {
+  // Agent
+  am1:['targetDemos'], am2:['targetLeads'],
+  md1:['middayLeads'], md2:['blocker'], md3:['middayDemos'],
+  ae1:['demos'], ae2:['leadsToday'], ae3:['coachingHeld'], ae4:['topics'],
+  // TL
+  tlm1:['agentsActive'], tlmd2:['blocker'],
+  tle1:['agents'], tle2:['demoLocation'], tle3:['coachingHeld'], tle4:['topics'],
+  tle5:['idcPots'], tle6:['idcOpening'], tle7:['idcClosing'], tle9:['reVisits'],
+  // RSM
+  rsmm1:['tls'], rsme1:['tls'], rsme2:['clustersVisited'],
+  rsme3:['demoLocation'], rsme4:['coachingHeld'], rsme5:['topics'],
+  // Trainer (typed names of NEW agents trained fall back into tre2)
+  tre2:['tre_new','agentsTrained'], trm2:['trm_new'],
+  // Clerk (live IDs may differ from defaults after question edits)
+  cke1:['cke3','idcSold'],            // total sales
+  cke3:['cke4'],                      // boiled water yes/no
+  cke4:['cke6','coachingHeld'],       // coaching done
+  cke5:['cke7','topics'],             // topics
+  cke6:['cke8'],                      // first installment
+  ckm5:['ckm6'],                      // support requested
+};
+function pget(r,field){
+  const d = r.data || {};
+  let v = d[field];
+  if(v!==undefined && v!==null && String(v).trim()!=='') return v;
+  const aliases = KEY_ALIASES[field] || [];
+  for(const a of aliases){
+    v = d[a];
+    if(v!==undefined && v!==null && String(v).trim()!=='') return v;
+  }
+  return '';
+}
+function pnum(r,field){return parseFloat(pget(r,field))||0;}
+
+// ── ISO date key helper: YYYY-MM-DD → sorts chronologically as text ──
+function isoKey(dt){
+  return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+}
 
 async function loadData(){
   try{
@@ -658,18 +701,27 @@ function renderOverviewCharts(d){
     [{data:sc,backgroundColor:['#f59050','#F07020','#c85010'],borderRadius:8}]);
   renderTop(d);
 }
+// ── FIXED: groups by ISO key (YYYY-MM-DD) so dates sort 1st → 31st chronologically,
+//    then formats labels for display only ──
 function renderTrend(d){
   const counts={};
   d.forEach(r=>{
     if(!r.timestamp)return;
-    const dt=new Date(r.timestamp);let key;
-    if(trendBy==='day')key=dt.toLocaleDateString();
-    else if(trendBy==='week'){const w=new Date(dt);w.setDate(dt.getDate()-dt.getDay());key='W/'+w.toLocaleDateString();}
-    else key=dt.getFullYear()+'-'+(dt.getMonth()+1).toString().padStart(2,'0');
+    const dt=new Date(r.timestamp);
+    if(isNaN(dt))return;
+    let key;
+    if(trendBy==='day')key=isoKey(dt);
+    else if(trendBy==='week'){const w=new Date(dt);w.setDate(dt.getDate()-dt.getDay());key=isoKey(w);}
+    else key=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');
     counts[key]=(counts[key]||0)+1;
   });
   const sorted=Object.entries(counts).sort((a,b)=>a[0].localeCompare(b[0]));
-  mkChart('chartTrend','line',sorted.map(x=>x[0]),[{data:sorted.map(x=>x[1]),label:'Submissions',borderColor:OR,backgroundColor:'rgba(240,112,32,.1)',fill:true,tension:.4,pointBackgroundColor:OR,pointRadius:4}]);
+  const labels=sorted.map(x=>{
+    if(trendBy==='month')return x[0];
+    const lbl=new Date(x[0]+'T00:00:00').toLocaleDateString();
+    return trendBy==='week'?'W/'+lbl:lbl;
+  });
+  mkChart('chartTrend','line',labels,[{data:sorted.map(x=>x[1]),label:'Submissions',borderColor:OR,backgroundColor:'rgba(240,112,32,.1)',fill:true,tension:.4,pointBackgroundColor:OR,pointRadius:4}]);
 }
 function setTrend(m,btn){trendBy=m;btn.closest('.cc').querySelectorAll('.tb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderTrend(filteredData);}
 function renderTop(d){
@@ -770,8 +822,10 @@ function renderSalesSection(d){
       <div class="funnel-step" style="width:${Math.max(w,20)}%;min-width:120px">${label}<span style="font-size:16px;font-weight:900">${val}</span></div>`;
     }).join('')+'</div>';
   }
-  const lc={};d.forEach(r=>{const v=pnum(r,'ae2');if(!v)return;const dt=new Date(r.timestamp).toLocaleDateString();lc[dt]=(lc[dt]||0)+v;});
-  const ls=Object.entries(lc).sort((a,b)=>a[0].localeCompare(b[0]));
+  // ── FIXED: leads-over-time grouped by ISO key so it sorts chronologically ──
+  const lc={};d.forEach(r=>{const v=pnum(r,'ae2');if(!v)return;const t=new Date(r.timestamp);if(isNaN(t))return;
+    const k=isoKey(t);lc[k]=(lc[k]||0)+v;});
+  const ls=Object.entries(lc).sort((a,b)=>a[0].localeCompare(b[0])).map(x=>[new Date(x[0]+'T00:00:00').toLocaleDateString(),x[1]]);
   mkChart('chartLeads','line',ls.map(x=>x[0]),[{data:ls.map(x=>x[1]),borderColor:OR,backgroundColor:'rgba(240,112,32,.1)',fill:true,tension:.4}]);
   const rrc={};d.filter(r=>pget(r,'md4')==='Yes'||pget(r,'ckmd4')==='Yes').forEach(r=>{rrc[r.region||'Unknown']=(rrc[r.region||'Unknown']||0)+1;});
   const rre=Object.entries(rrc).sort((a,b)=>b[1]-a[1]).slice(0,8);
@@ -1064,9 +1118,6 @@ function renderComplianceSection(d){
   const morningSubmitted=d.filter(r=>r.session==='Morning').length;
   const middaySubmitted=d.filter(r=>r.session==='Midday').length;
   const eodSubmitted=d.filter(r=>r.session==='EOD').length;
-  const expM=people.length*(sessionFilter?0:1)*workingDays||(sessionFilter==='Morning'?people.length*workingDays:0);
-  const expMd=people.length*(sessionFilter?0:1)*workingDays||(sessionFilter==='Midday'?people.length*workingDays:0);
-  const expE=people.length*(sessionFilter?0:1)*workingDays||(sessionFilter==='EOD'?people.length*workingDays:0);
 
   // Simpler per-session compliance
   const mComp=sessionFilter===''||sessionFilter==='Morning'
